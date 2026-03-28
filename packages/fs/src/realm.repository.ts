@@ -60,6 +60,16 @@ function applyTraceFilter(traces: Trace[], filter: TraceFilter): Trace[] {
   });
 }
 
+function applyTraceFilter(traces: Trace[], filter: TraceFilter): Trace[] {
+  return traces.filter((t) => {
+    if (filter.taskId && !t.taskId?.equals(filter.taskId)) return false;
+    if (filter.actor && t.actor !== filter.actor) return false;
+    if (filter.event && t.event !== filter.event) return false;
+    if (filter.since && t.at < filter.since) return false;
+    return true;
+  });
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -193,7 +203,7 @@ export class FsRealmRepository implements IRealmRepository {
     const traces: Trace[] = [];
 
     for (const adr of adrs) {
-      const tracesDir = path.join(this.adrKitDir, LOG_DIR, adr.id.toString(), TRACES_DIR);
+      const tracesDir = path.join(this.adrKitDir, LOG_DIR, adrDirName(adr.id), TRACES_DIR);
       let entries: string[];
       try {
         entries = await fs.readdir(tracesDir);
