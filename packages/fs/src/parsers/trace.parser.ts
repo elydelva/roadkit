@@ -12,6 +12,8 @@ function toTraceEvent(val: unknown): TraceEvent {
     "issue_abandoned",
     "spec_created",
     "spec_status_changed",
+    "project_status_changed",
+    "milestone_status_changed",
     "rules_acknowledged",
     "note",
     "synced",

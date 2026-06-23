@@ -1,6 +1,6 @@
 import { Project, Trace } from "../../entities/index.js";
 import type { CreateProjectParams } from "../../entities/index.js";
-import type { IGitAdapter, IRealmRepository } from "../../ports/index.js";
+import type { IRealmRepository } from "../../ports/index.js";
 import { ProjectId, TraceId } from "../../value-objects/index.js";
 
 type CreateProjectInput = Omit<CreateProjectParams, "id"> & {
@@ -9,10 +9,7 @@ type CreateProjectInput = Omit<CreateProjectParams, "id"> & {
 };
 
 export class CreateProjectUseCase {
-  constructor(
-    private readonly repo: IRealmRepository,
-    private readonly git?: IGitAdapter
-  ) {}
+  constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateProjectInput): Promise<Project> {
     const counter = await this.repo.incrementCounter("project");
@@ -29,10 +26,6 @@ export class CreateProjectUseCase {
       event: "project_created",
     });
     await this.repo.appendTrace(trace);
-
-    if (this.git) {
-      await this.git.stage([`projects/${id.toString()}`]);
-    }
 
     return project;
   }

@@ -1,7 +1,7 @@
 import { Trace } from "../../entities/index.js";
 import type { Issue } from "../../entities/index.js";
 import { IssueNotFoundError } from "../../errors/index.js";
-import type { IGitAdapter, IRealmRepository } from "../../ports/index.js";
+import type { IRealmRepository } from "../../ports/index.js";
 import { StateMachineService } from "../../services/index.js";
 import { TraceId } from "../../value-objects/index.js";
 import type { IssueId } from "../../value-objects/index.js";
@@ -15,10 +15,7 @@ interface StartIssueInput {
 export class StartIssueUseCase {
   private readonly stateMachine = new StateMachineService();
 
-  constructor(
-    private readonly repo: IRealmRepository,
-    private readonly git?: IGitAdapter
-  ) {}
+  constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: StartIssueInput): Promise<Issue> {
     const issue = await this.repo.findIssue(input.id);
@@ -48,12 +45,6 @@ export class StartIssueUseCase {
       to: "in-progress",
     });
     await this.repo.appendTrace(trace);
-
-    if (this.git) {
-      await this.git.stage([
-        `projects/${issue.projectId.toString()}/issues/${issue.id.toString()}`,
-      ]);
-    }
 
     return updated;
   }

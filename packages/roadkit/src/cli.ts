@@ -6,9 +6,11 @@ import { runIssueAdd } from "./commands/issue/add.js";
 import { runIssueComplete } from "./commands/issue/complete.js";
 import { runIssueStart } from "./commands/issue/start.js";
 import { runMilestoneNew } from "./commands/milestone/new.js";
+import { runMilestoneStart, runMilestoneStatus } from "./commands/milestone/status.js";
 import { runNext } from "./commands/next.js";
 import { runProjectList } from "./commands/project/list.js";
 import { runProjectNew } from "./commands/project/new.js";
+import { runProjectStart, runProjectStatus } from "./commands/project/status.js";
 import { runSpecNew } from "./commands/spec/new.js";
 import { runSpecStatus } from "./commands/spec/status.js";
 import { createContainer } from "./container.js";
@@ -56,6 +58,20 @@ export function buildCLI(): Command {
       await runProjectList(createContainer(getRealmRoot()), opts);
     });
 
+  project
+    .command("status <projectId> <status>")
+    .description("Change a project's status (planned|active|paused|completed|cancelled)")
+    .action(async (projectId: string, status: string) => {
+      await runProjectStatus(createContainer(getRealmRoot()), projectId, status);
+    });
+
+  project
+    .command("start <projectId>")
+    .description("Transition a planned project to active")
+    .action(async (projectId: string) => {
+      await runProjectStart(createContainer(getRealmRoot()), projectId);
+    });
+
   // --- milestone ---
   const milestone = program.command("milestone").description("Manage milestones");
 
@@ -78,6 +94,20 @@ export function buildCLI(): Command {
         await runMilestoneNew(createContainer(getRealmRoot()), opts);
       }
     );
+
+  milestone
+    .command("status <milestoneId> <status>")
+    .description("Change a milestone's status (pending|active|done)")
+    .action(async (milestoneId: string, status: string) => {
+      await runMilestoneStatus(createContainer(getRealmRoot()), milestoneId, status);
+    });
+
+  milestone
+    .command("start <milestoneId>")
+    .description("Transition a pending milestone to active")
+    .action(async (milestoneId: string) => {
+      await runMilestoneStart(createContainer(getRealmRoot()), milestoneId);
+    });
 
   // --- issue ---
   const issue = program.command("issue").description("Manage issues");

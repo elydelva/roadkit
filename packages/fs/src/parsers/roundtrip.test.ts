@@ -184,4 +184,20 @@ describe("trace round-trip", () => {
     expect(parsed.specId?.toString()).toBe("SPEC-0001");
     expect(parsed.issueId).toBeNull();
   });
+
+  it("preserves a project_status_changed trace", () => {
+    const trace = Trace.create({
+      id: TraceId.generate(),
+      projectId: ProjectId.from("PROJ-0001"),
+      actor: "alice",
+      actorType: "human",
+      event: "project_status_changed",
+      from: "planned",
+      to: "active",
+    });
+    const parsed = parseTrace(serializeTrace(trace));
+    expect(parsed.event).toBe("project_status_changed");
+    expect(parsed.from).toBe("planned");
+    expect(parsed.to).toBe("active");
+  });
 });

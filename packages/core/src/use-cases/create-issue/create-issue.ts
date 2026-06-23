@@ -1,7 +1,7 @@
 import { Issue, Trace } from "../../entities/index.js";
 import type { CreateIssueParams } from "../../entities/index.js";
 import { MilestoneNotFoundError, ProjectNotFoundError } from "../../errors/index.js";
-import type { IGitAdapter, IRealmRepository } from "../../ports/index.js";
+import type { IRealmRepository } from "../../ports/index.js";
 import { IssueId, TraceId } from "../../value-objects/index.js";
 
 type CreateIssueInput = Omit<CreateIssueParams, "id"> & {
@@ -10,10 +10,7 @@ type CreateIssueInput = Omit<CreateIssueParams, "id"> & {
 };
 
 export class CreateIssueUseCase {
-  constructor(
-    private readonly repo: IRealmRepository,
-    private readonly git?: IGitAdapter
-  ) {}
+  constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateIssueInput): Promise<Issue> {
     const project = await this.repo.findProject(input.projectId);
@@ -43,10 +40,6 @@ export class CreateIssueUseCase {
       event: "issue_created",
     });
     await this.repo.appendTrace(trace);
-
-    if (this.git) {
-      await this.git.stage([`projects/${input.projectId.toString()}/issues/${id.toString()}`]);
-    }
 
     return issue;
   }

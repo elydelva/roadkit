@@ -41,6 +41,8 @@ export {
   CompleteIssueUseCase,
   CreateSpecUseCase,
   SetSpecStatusUseCase,
+  SetProjectStatusUseCase,
+  SetMilestoneStatusUseCase,
   GetNextUseCase,
   GetContextUseCase,
   GetHistoryUseCase,

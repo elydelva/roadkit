@@ -1,7 +1,7 @@
 import { Milestone, Trace } from "../../entities/index.js";
 import type { CreateMilestoneParams } from "../../entities/index.js";
 import { ProjectNotFoundError } from "../../errors/index.js";
-import type { IGitAdapter, IRealmRepository } from "../../ports/index.js";
+import type { IRealmRepository } from "../../ports/index.js";
 import { MilestoneId, TraceId } from "../../value-objects/index.js";
 
 type CreateMilestoneInput = Omit<CreateMilestoneParams, "id"> & {
@@ -11,10 +11,7 @@ type CreateMilestoneInput = Omit<CreateMilestoneParams, "id"> & {
 };
 
 export class CreateMilestoneUseCase {
-  constructor(
-    private readonly repo: IRealmRepository,
-    private readonly git?: IGitAdapter
-  ) {}
+  constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateMilestoneInput): Promise<Milestone> {
     const project = await this.repo.findProject(input.projectId);
@@ -37,10 +34,6 @@ export class CreateMilestoneUseCase {
       ref: id.toString(),
     });
     await this.repo.appendTrace(trace);
-
-    if (this.git) {
-      await this.git.stage([`projects/${input.projectId.toString()}/milestones/${id.toString()}`]);
-    }
 
     return milestone;
   }

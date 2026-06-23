@@ -1,7 +1,7 @@
 import { Spec, Trace } from "../../entities/index.js";
 import type { CreateSpecParams } from "../../entities/index.js";
 import { ProjectNotFoundError } from "../../errors/index.js";
-import type { IGitAdapter, IRealmRepository } from "../../ports/index.js";
+import type { IRealmRepository } from "../../ports/index.js";
 import { SpecId, TraceId } from "../../value-objects/index.js";
 
 type CreateSpecInput = Omit<CreateSpecParams, "id"> & {
@@ -10,10 +10,7 @@ type CreateSpecInput = Omit<CreateSpecParams, "id"> & {
 };
 
 export class CreateSpecUseCase {
-  constructor(
-    private readonly repo: IRealmRepository,
-    private readonly git?: IGitAdapter
-  ) {}
+  constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateSpecInput): Promise<Spec> {
     const project = await this.repo.findProject(input.projectId);
@@ -36,10 +33,6 @@ export class CreateSpecUseCase {
       event: "spec_created",
     });
     await this.repo.appendTrace(trace);
-
-    if (this.git) {
-      await this.git.stage([`projects/${input.projectId.toString()}/specs/${id.toString()}`]);
-    }
 
     return spec;
   }

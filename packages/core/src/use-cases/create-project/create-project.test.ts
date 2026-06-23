@@ -26,16 +26,4 @@ describe("CreateProjectUseCase", () => {
     expect(traces[0]?.event).toBe("project_created");
     expect(traces[0]?.projectId.equals(project.id)).toBe(true);
   });
-
-  it("calls git.stage when git adapter is provided", async () => {
-    const staged: string[][] = [];
-    const git = {
-      stage: async (p: string[]) => {
-        staged.push(p);
-      },
-      isRepo: async () => true,
-    };
-    await new CreateProjectUseCase(repo, git).execute({ title: "Git", author: "alice" });
-    expect(staged).toHaveLength(1);
-  });
 });

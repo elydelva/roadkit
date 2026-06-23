@@ -8,6 +8,8 @@ import {
   GetHistoryUseCase,
   GetNextUseCase,
   type IRealmRepository,
+  SetMilestoneStatusUseCase,
+  SetProjectStatusUseCase,
   SetSpecStatusUseCase,
   StartIssueUseCase,
 } from "@roadkit/core";
@@ -24,6 +26,8 @@ export interface Container {
   completeIssue: CompleteIssueUseCase;
   createSpec: CreateSpecUseCase;
   setSpecStatus: SetSpecStatusUseCase;
+  setProjectStatus: SetProjectStatusUseCase;
+  setMilestoneStatus: SetMilestoneStatusUseCase;
   getNext: GetNextUseCase;
   getContext: GetContextUseCase;
   getHistory: GetHistoryUseCase;
@@ -46,6 +50,8 @@ export function createContainer(realmRoot: string): Container {
     completeIssue: new CompleteIssueUseCase(repo),
     createSpec: new CreateSpecUseCase(repo),
     setSpecStatus: new SetSpecStatusUseCase(repo),
+    setProjectStatus: new SetProjectStatusUseCase(repo),
+    setMilestoneStatus: new SetMilestoneStatusUseCase(repo),
     getNext: new GetNextUseCase(repo),
     getContext: new GetContextUseCase(repo),
     getHistory: new GetHistoryUseCase(repo),
