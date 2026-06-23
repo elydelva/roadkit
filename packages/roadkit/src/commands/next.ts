@@ -1,5 +1,5 @@
 import type { Container } from "../container.js";
-import { serializeIssue, serializeMilestone, serializeProject } from "./shared.js";
+import { formatEstimate, serializeIssue, serializeMilestone, serializeProject } from "./shared.js";
 
 interface NextOptions {
   json?: boolean;
@@ -32,5 +32,7 @@ export async function runNext(container: Container, opts: NextOptions): Promise<
   const scope = milestone
     ? `${project.id.toString()} / ${milestone.id.toString()}`
     : project.id.toString();
-  console.log(`→ ${issue.id.toString()}  ${issue.title}  [${issue.priority}]  (${scope})`);
+  const est = formatEstimate(container.config, issue.estimate);
+  const tag = est ? `${issue.priority} · ${est}` : issue.priority;
+  console.log(`→ ${issue.id.toString()}  ${issue.title}  [${tag}]  (${scope})`);
 }

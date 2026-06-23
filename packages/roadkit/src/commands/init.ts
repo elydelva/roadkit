@@ -1,12 +1,13 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { DEFAULT_CONFIG } from "@roadkit/core";
 import {
   CONFIG_FILE,
   MD_EXT,
   ROADKIT_DIR,
   STATE_FILE,
   TEMPLATES_DIR,
-  writeADRConfig,
+  writeRealmConfig,
 } from "@roadkit/fs";
 
 const PROJECT_TEMPLATE = `---
@@ -125,11 +126,7 @@ export async function runInit(realmRoot: string): Promise<void> {
   if (await exists(configPath)) {
     console.log(`✓ ${CONFIG_FILE} already exists, skipping`);
   } else {
-    await writeADRConfig(realmRoot, {
-      idFormat: "PROJ-XXXX",
-      types: ["project", "milestone", "issue", "spec"],
-      templates: {},
-    });
+    await writeRealmConfig(realmRoot, DEFAULT_CONFIG);
   }
 
   console.log(`✓ Initialized ${ROADKIT_DIR}/`);

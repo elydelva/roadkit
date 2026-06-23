@@ -1,4 +1,4 @@
-import { IssueId, MilestoneId, type Priority, ProjectId } from "@roadkit/core";
+import { IssueId, MilestoneId, ProjectId, resolveEstimate } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { fail, parseList, resolveAuthor } from "../shared.js";
 
@@ -15,25 +15,29 @@ interface IssueAddOptions {
   body?: string;
 }
 
-const PRIORITIES: ReadonlySet<string> = new Set(["urgent", "high", "medium", "low", "none"]);
-
 export async function runIssueAdd(container: Container, opts: IssueAddOptions): Promise<void> {
   if (!opts.project) fail("--project is required");
   if (!opts.title) fail("--title is required");
 
-  let priority: Priority | undefined;
+  const { levels, default: defaultPriority } = container.config.priority;
+
+  let priority: string;
   if (opts.priority !== undefined) {
-    if (!PRIORITIES.has(opts.priority)) {
-      fail(`Invalid --priority: ${opts.priority} (expected urgent|high|medium|low|none)`);
+    if (!levels.includes(opts.priority)) {
+      fail(`Invalid --priority: ${opts.priority} (expected ${levels.join("|")})`);
     }
-    priority = opts.priority as Priority;
+    priority = opts.priority;
+  } else {
+    priority = defaultPriority;
   }
 
   let estimate: number | undefined;
   if (opts.estimate !== undefined) {
-    const n = Number.parseFloat(opts.estimate);
-    if (Number.isNaN(n)) fail(`Invalid --estimate: ${opts.estimate}`);
-    estimate = n;
+    try {
+      estimate = resolveEstimate(container.config, opts.estimate);
+    } catch (err) {
+      fail(`Invalid --estimate: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   const author = resolveAuthor();
@@ -41,8 +45,8 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
     projectId: ProjectId.from(opts.project),
     title: opts.title,
     author,
+    priority,
     ...(opts.milestone ? { milestoneId: MilestoneId.from(opts.milestone) } : {}),
-    ...(priority ? { priority } : {}),
     ...(estimate !== undefined ? { estimate } : {}),
     labels: parseList(opts.labels),
     ...(opts.parent ? { parentId: IssueId.from(opts.parent) } : {}),
