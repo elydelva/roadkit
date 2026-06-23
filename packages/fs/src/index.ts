@@ -1,5 +1,6 @@
 export {
   ADRKIT_DIR,
+  LOG_DIR,
   STATE_FILE,
   CONFIG_FILE,
   TEMPLATES_DIR,

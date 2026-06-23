@@ -20,7 +20,7 @@ export function buildCLI(): Command {
   program
     .name("adrkit")
     .description("Decision-first, agent-native project management for git repositories")
-    .version("0.1.0");
+    .version("0.1.1");
 
   program
     .command("init")

@@ -1,6 +1,6 @@
 {
   "name": "adrkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Decision-first, agent-native project management system for git repositories",
   "type": "module",
   "license": "MIT",
