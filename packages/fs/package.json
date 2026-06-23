@@ -2,13 +2,14 @@
   "name": "@roadkit/fs",
   "version": "0.0.0",
   "private": true,
-  "description": "roadkit filesystem adapter — IRealmRepository implementation",
+  "description": "roadkit filesystem adapter \u2014 IRealmRepository implementation",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
