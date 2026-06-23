@@ -4,27 +4,32 @@ import { TraceId } from "./trace-id.js";
 
 describe("TraceId", () => {
   it("creates from valid format", () => {
-    const id = TraceId.from("TRACE-0001");
-    expect(id.toString()).toBe("TRACE-0001");
+    const id = TraceId.from("TRACE-20260623T1430-a1b2c3");
+    expect(id.toString()).toBe("TRACE-20260623T1430-a1b2c3");
   });
 
   it("throws on invalid format", () => {
-    expect(() => TraceId.from("trace-0001")).toThrow(InvalidIdError);
-    expect(() => TraceId.from("TRACE-1")).toThrow(InvalidIdError);
-    expect(() => TraceId.from("TRACE-ABCD")).toThrow(InvalidIdError);
+    expect(() => TraceId.from("trace-20260623T1430-a1b2c3")).toThrow(InvalidIdError);
+    expect(() => TraceId.from("TRACE-0001")).toThrow(InvalidIdError);
+    expect(() => TraceId.from("TRACE-20260623T1430-ABCDEF")).toThrow(InvalidIdError);
+    expect(() => TraceId.from("TRACE-20260623T1430-a1b2")).toThrow(InvalidIdError);
     expect(() => TraceId.from("")).toThrow(InvalidIdError);
   });
 
-  it("generates from counter", () => {
-    expect(TraceId.generate(1).toString()).toBe("TRACE-0001");
-    expect(TraceId.generate(42).toString()).toBe("TRACE-0042");
-    expect(TraceId.generate(9999).toString()).toBe("TRACE-9999");
+  it("generates a well-formed id", () => {
+    const id = TraceId.generate();
+    expect(id.toString()).toMatch(/^TRACE-\d{8}T\d{4}-[0-9a-f]{6}$/);
+  });
+
+  it("generated ids round-trip through from", () => {
+    const id = TraceId.generate();
+    expect(() => TraceId.from(id.toString())).not.toThrow();
   });
 
   it("equals works", () => {
-    const a = TraceId.from("TRACE-0001");
-    const b = TraceId.from("TRACE-0001");
-    const c = TraceId.from("TRACE-0002");
+    const a = TraceId.from("TRACE-20260623T1430-a1b2c3");
+    const b = TraceId.from("TRACE-20260623T1430-a1b2c3");
+    const c = TraceId.from("TRACE-20260623T1430-d4e5f6");
     expect(a.equals(b)).toBe(true);
     expect(a.equals(c)).toBe(false);
   });

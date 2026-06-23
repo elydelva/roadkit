@@ -1,13 +1,21 @@
 // Value Objects
-export { ADRId, TaskId, TraceId } from "./value-objects/index.js";
-export type { ADRStatus, TaskStatus } from "./value-objects/index.js";
+export { ProjectId, MilestoneId, IssueId, SpecId, TraceId } from "./value-objects/index.js";
+export type {
+  ProjectStatus,
+  MilestoneStatus,
+  IssueStatus,
+  SpecStatus,
+  Priority,
+} from "./value-objects/index.js";
 
 // Entities
-export { ADR, Task, Trace } from "./entities/index.js";
+export { Project, Milestone, Issue, Spec, Trace } from "./entities/index.js";
 export type {
-  CreateADRParams,
   Rule,
-  CreateTaskParams,
+  CreateProjectParams,
+  CreateMilestoneParams,
+  CreateIssueParams,
+  CreateSpecParams,
   TraceEvent,
   CreateTraceParams,
 } from "./entities/index.js";
@@ -26,9 +34,13 @@ export { StateMachineService, DAGService } from "./services/index.js";
 
 // Use Cases
 export {
-  CreateADRUseCase,
-  CreateTaskUseCase,
-  CompleteTaskUseCase,
+  CreateProjectUseCase,
+  CreateMilestoneUseCase,
+  CreateIssueUseCase,
+  StartIssueUseCase,
+  CompleteIssueUseCase,
+  CreateSpecUseCase,
+  SetSpecStatusUseCase,
   GetNextUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
@@ -39,7 +51,9 @@ export type { NextResult, ContextFilter, RealmContext, HistoryFilter } from "./u
 export {
   InvalidTransitionError,
   GatesNotClearedError,
-  ADRNotFoundError,
-  TaskNotFoundError,
+  ProjectNotFoundError,
+  MilestoneNotFoundError,
+  IssueNotFoundError,
+  SpecNotFoundError,
   InvalidIdError,
 } from "./errors/index.js";

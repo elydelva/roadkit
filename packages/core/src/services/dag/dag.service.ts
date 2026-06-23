@@ -1,12 +1,13 @@
-import type { ADR } from "../../entities/adr/adr.js";
-import type { Task } from "../../entities/task/task.js";
-import { TaskId } from "../../value-objects/task-id/task-id.js";
+import type { Issue } from "../../entities/issue/issue.js";
+import type { Milestone } from "../../entities/milestone/milestone.js";
+import type { Project } from "../../entities/project/project.js";
+import { IssueId } from "../../value-objects/issue-id/issue-id.js";
 
 export class DAGService {
-  areGatesCleared(task: Task, allTasks: Task[]): boolean {
-    for (const gate of task.gates) {
-      if (gate instanceof TaskId) {
-        const dep = allTasks.find((t) => t.id.equals(gate));
+  areGatesCleared(issue: Issue, allIssues: Issue[]): boolean {
+    for (const gate of issue.gates) {
+      if (gate instanceof IssueId) {
+        const dep = allIssues.find((i) => i.id.equals(gate));
         if (!dep || dep.status !== "completed") {
           return false;
         }
@@ -16,21 +17,19 @@ export class DAGService {
     return true;
   }
 
-  getBlockedTasks(tasks: Task[]): Task[] {
-    return tasks.filter((t) => t.status === "blocked" || !this.areGatesCleared(t, tasks));
+  getBlockedIssues(issues: Issue[]): Issue[] {
+    return issues.filter((i) => i.status === "blocked" || !this.areGatesCleared(i, issues));
   }
 
-  getEligibleTasks(tasks: Task[], adrs: ADR[]): Task[] {
-    const activeADRIds = new Set(
-      adrs
-        .filter((a) => a.status === "accepted" || a.status === "in-progress")
-        .map((a) => a.id.toString())
+  getEligibleIssues(issues: Issue[], projects: Project[], _milestones: Milestone[]): Issue[] {
+    const activeProjectIds = new Set(
+      projects.filter((p) => p.status === "active").map((p) => p.id.toString())
     );
 
-    return tasks.filter((task) => {
-      if (!activeADRIds.has(task.adrId.toString())) return false;
-      if (task.status !== "not-started" && task.status !== "blocked") return false;
-      if (!this.areGatesCleared(task, tasks)) return false;
+    return issues.filter((issue) => {
+      if (!activeProjectIds.has(issue.projectId.toString())) return false;
+      if (issue.status !== "not-started" && issue.status !== "blocked") return false;
+      if (!this.areGatesCleared(issue, issues)) return false;
       return true;
     });
   }

@@ -1,7 +1,9 @@
 export {
   InvalidTransitionError,
   GatesNotClearedError,
-  ADRNotFoundError,
-  TaskNotFoundError,
+  ProjectNotFoundError,
+  MilestoneNotFoundError,
+  IssueNotFoundError,
+  SpecNotFoundError,
   InvalidIdError,
 } from "./errors.js";

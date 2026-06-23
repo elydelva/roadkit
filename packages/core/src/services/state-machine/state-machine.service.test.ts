@@ -9,49 +9,84 @@ describe("StateMachineService", () => {
     sm = new StateMachineService();
   });
 
-  describe("ADR transitions", () => {
+  describe("Issue transitions", () => {
     it("allows valid transitions", () => {
-      expect(sm.isValidADRTransition("draft", "proposed")).toBe(true);
-      expect(sm.isValidADRTransition("draft", "abandoned")).toBe(true);
-      expect(sm.isValidADRTransition("proposed", "accepted")).toBe(true);
-      expect(sm.isValidADRTransition("accepted", "in-progress")).toBe(true);
-      expect(sm.isValidADRTransition("in-progress", "completed")).toBe(true);
-      expect(sm.isValidADRTransition("completed", "superseded")).toBe(true);
-      expect(sm.isValidADRTransition("deferred", "accepted")).toBe(true);
+      expect(sm.isValidIssueTransition("not-started", "in-progress")).toBe(true);
+      expect(sm.isValidIssueTransition("not-started", "skipped")).toBe(true);
+      expect(sm.isValidIssueTransition("in-progress", "completed")).toBe(true);
+      expect(sm.isValidIssueTransition("in-progress", "blocked")).toBe(true);
+      expect(sm.isValidIssueTransition("blocked", "in-progress")).toBe(true);
     });
 
     it("rejects invalid transitions", () => {
-      expect(sm.isValidADRTransition("draft", "completed")).toBe(false);
-      expect(sm.isValidADRTransition("completed", "draft")).toBe(false);
-      expect(sm.isValidADRTransition("abandoned", "draft")).toBe(false);
+      expect(sm.isValidIssueTransition("completed", "in-progress")).toBe(false);
+      expect(sm.isValidIssueTransition("skipped", "in-progress")).toBe(false);
+      expect(sm.isValidIssueTransition("abandoned", "in-progress")).toBe(false);
     });
 
     it("throws on invalid transition via validate", () => {
-      expect(() => sm.validateADRTransition("draft", "completed")).toThrow(InvalidTransitionError);
-    });
-
-    it("does not throw on valid transition via validate", () => {
-      expect(() => sm.validateADRTransition("draft", "proposed")).not.toThrow();
+      expect(() => sm.validateIssueTransition("completed", "in-progress")).toThrow(
+        InvalidTransitionError
+      );
     });
   });
 
-  describe("Task transitions", () => {
+  describe("Spec transitions", () => {
     it("allows valid transitions", () => {
-      expect(sm.isValidTaskTransition("not-started", "in-progress")).toBe(true);
-      expect(sm.isValidTaskTransition("not-started", "skipped")).toBe(true);
-      expect(sm.isValidTaskTransition("in-progress", "completed")).toBe(true);
-      expect(sm.isValidTaskTransition("in-progress", "blocked")).toBe(true);
-      expect(sm.isValidTaskTransition("blocked", "in-progress")).toBe(true);
+      expect(sm.isValidSpecTransition("draft", "proposed")).toBe(true);
+      expect(sm.isValidSpecTransition("draft", "abandoned")).toBe(true);
+      expect(sm.isValidSpecTransition("proposed", "accepted")).toBe(true);
+      expect(sm.isValidSpecTransition("accepted", "superseded")).toBe(true);
+      expect(sm.isValidSpecTransition("accepted", "deferred")).toBe(true);
+      expect(sm.isValidSpecTransition("deferred", "accepted")).toBe(true);
     });
 
     it("rejects invalid transitions", () => {
-      expect(sm.isValidTaskTransition("completed", "in-progress")).toBe(false);
-      expect(sm.isValidTaskTransition("skipped", "in-progress")).toBe(false);
-      expect(sm.isValidTaskTransition("abandoned", "in-progress")).toBe(false);
+      expect(sm.isValidSpecTransition("draft", "accepted")).toBe(false);
+      expect(sm.isValidSpecTransition("superseded", "draft")).toBe(false);
+      expect(sm.isValidSpecTransition("abandoned", "draft")).toBe(false);
     });
 
     it("throws on invalid transition via validate", () => {
-      expect(() => sm.validateTaskTransition("completed", "in-progress")).toThrow(
+      expect(() => sm.validateSpecTransition("draft", "accepted")).toThrow(InvalidTransitionError);
+    });
+  });
+
+  describe("Project transitions", () => {
+    it("allows valid transitions", () => {
+      expect(sm.isValidProjectTransition("planned", "active")).toBe(true);
+      expect(sm.isValidProjectTransition("active", "paused")).toBe(true);
+      expect(sm.isValidProjectTransition("active", "completed")).toBe(true);
+      expect(sm.isValidProjectTransition("paused", "active")).toBe(true);
+    });
+
+    it("rejects invalid transitions", () => {
+      expect(sm.isValidProjectTransition("planned", "completed")).toBe(false);
+      expect(sm.isValidProjectTransition("completed", "active")).toBe(false);
+      expect(sm.isValidProjectTransition("cancelled", "active")).toBe(false);
+    });
+
+    it("throws on invalid transition via validate", () => {
+      expect(() => sm.validateProjectTransition("planned", "completed")).toThrow(
+        InvalidTransitionError
+      );
+    });
+  });
+
+  describe("Milestone transitions", () => {
+    it("allows valid transitions", () => {
+      expect(sm.isValidMilestoneTransition("pending", "active")).toBe(true);
+      expect(sm.isValidMilestoneTransition("active", "done")).toBe(true);
+      expect(sm.isValidMilestoneTransition("active", "pending")).toBe(true);
+      expect(sm.isValidMilestoneTransition("done", "active")).toBe(true);
+    });
+
+    it("rejects invalid transitions", () => {
+      expect(sm.isValidMilestoneTransition("pending", "done")).toBe(false);
+    });
+
+    it("throws on invalid transition via validate", () => {
+      expect(() => sm.validateMilestoneTransition("pending", "done")).toThrow(
         InvalidTransitionError
       );
     });

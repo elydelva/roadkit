@@ -1,28 +1,28 @@
 import { describe, expect, it } from "bun:test";
-import { ADR } from "../../entities/adr/adr.js";
-import { Task } from "../../entities/task/task.js";
-import { ADRId } from "../../value-objects/adr-id/adr-id.js";
-import { TaskId } from "../../value-objects/task-id/task-id.js";
+import { Issue } from "../../entities/issue/issue.js";
+import { Project } from "../../entities/project/project.js";
+import { IssueId } from "../../value-objects/issue-id/issue-id.js";
+import { ProjectId } from "../../value-objects/project-id/project-id.js";
 import { DAGService } from "./dag.service.js";
 
-function makeTask(
+function makeIssue(
   n: number,
-  gates: Array<TaskId | string> = [],
-  status: Task["status"] = "not-started"
-): Task {
-  const t = Task.create({
-    id: TaskId.generate(n),
-    adrId: ADRId.generate(1),
-    title: `Task ${n}`,
+  gates: Array<IssueId | string> = [],
+  status: Issue["status"] = "not-started"
+): Issue {
+  const i = Issue.create({
+    id: IssueId.generate(n),
+    projectId: ProjectId.generate(1),
+    title: `Issue ${n}`,
     author: "test",
     gates,
   });
-  return { ...t, status };
+  return { ...i, status };
 }
 
-function makeADR(n: number, status: ADR["status"] = "accepted"): ADR {
-  const a = ADR.create({ id: ADRId.generate(n), title: `ADR ${n}`, author: "test" });
-  return { ...a, status };
+function makeProject(n: number, status: Project["status"] = "active"): Project {
+  const p = Project.create({ id: ProjectId.generate(n), title: `Project ${n}`, author: "test" });
+  return { ...p, status };
 }
 
 describe("DAGService", () => {
@@ -30,72 +30,77 @@ describe("DAGService", () => {
 
   describe("areGatesCleared", () => {
     it("returns true when no gates", () => {
-      const task = makeTask(1);
-      expect(dag.areGatesCleared(task, [task])).toBe(true);
+      const issue = makeIssue(1);
+      expect(dag.areGatesCleared(issue, [issue])).toBe(true);
     });
 
-    it("returns true when all gate tasks are completed", () => {
-      const dep = makeTask(1, [], "completed");
-      const task = makeTask(2, [dep.id]);
-      expect(dag.areGatesCleared(task, [dep, task])).toBe(true);
+    it("returns true when all gate issues are completed", () => {
+      const dep = makeIssue(1, [], "completed");
+      const issue = makeIssue(2, [dep.id]);
+      expect(dag.areGatesCleared(issue, [dep, issue])).toBe(true);
     });
 
-    it("returns false when a gate task is not completed", () => {
-      const dep = makeTask(1, [], "in-progress");
-      const task = makeTask(2, [dep.id]);
-      expect(dag.areGatesCleared(task, [dep, task])).toBe(false);
+    it("returns false when a gate issue is not completed", () => {
+      const dep = makeIssue(1, [], "in-progress");
+      const issue = makeIssue(2, [dep.id]);
+      expect(dag.areGatesCleared(issue, [dep, issue])).toBe(false);
     });
 
     it("treats string gates as cleared", () => {
-      const task = makeTask(1, ["external-thing"]);
-      expect(dag.areGatesCleared(task, [task])).toBe(true);
+      const issue = makeIssue(1, ["external-thing"]);
+      expect(dag.areGatesCleared(issue, [issue])).toBe(true);
     });
   });
 
-  describe("getEligibleTasks", () => {
-    it("returns not-started tasks from active ADRs with cleared gates", () => {
-      const adr = makeADR(1, "accepted");
-      const task = makeTask(1);
-      const result = dag.getEligibleTasks([task], [adr]);
+  describe("getEligibleIssues", () => {
+    it("returns not-started issues from active projects with cleared gates", () => {
+      const project = makeProject(1, "active");
+      const issue = makeIssue(1);
+      const result = dag.getEligibleIssues([issue], [project], []);
       expect(result).toHaveLength(1);
     });
 
-    it("excludes tasks from non-active ADRs", () => {
-      const adr = makeADR(1, "draft");
-      const task = makeTask(1);
-      const result = dag.getEligibleTasks([task], [adr]);
+    it("excludes issues from non-active projects", () => {
+      const project = makeProject(1, "planned");
+      const issue = makeIssue(1);
+      const result = dag.getEligibleIssues([issue], [project], []);
       expect(result).toHaveLength(0);
     });
 
-    it("excludes completed tasks", () => {
-      const adr = makeADR(1, "accepted");
-      const task = makeTask(1, [], "completed");
-      const result = dag.getEligibleTasks([task], [adr]);
+    it("excludes completed issues", () => {
+      const project = makeProject(1, "active");
+      const issue = makeIssue(1, [], "completed");
+      const result = dag.getEligibleIssues([issue], [project], []);
       expect(result).toHaveLength(0);
     });
 
-    it("excludes tasks whose gates are not cleared", () => {
-      const adr = makeADR(1, "accepted");
-      const dep = makeTask(1, [], "in-progress");
-      const task = makeTask(2, [dep.id]);
-      const result = dag.getEligibleTasks([dep, task], [adr]);
-      // dep is in-progress — not eligible (status != not-started/blocked)
-      // task gates not cleared — not eligible
+    it("excludes issues whose gates are not cleared", () => {
+      const project = makeProject(1, "active");
+      const dep = makeIssue(1, [], "in-progress");
+      const issue = makeIssue(2, [dep.id]);
+      const result = dag.getEligibleIssues([dep, issue], [project], []);
       expect(result).toHaveLength(0);
+    });
+
+    it("includes blocked issues with cleared gates", () => {
+      const project = makeProject(1, "active");
+      const issue = makeIssue(1, [], "blocked");
+      const result = dag.getEligibleIssues([issue], [project], []);
+      expect(result).toHaveLength(1);
     });
   });
 
-  describe("getBlockedTasks", () => {
-    it("returns blocked status tasks", () => {
-      const task = makeTask(1, [], "blocked");
-      expect(dag.getBlockedTasks([task])).toHaveLength(1);
+  describe("getBlockedIssues", () => {
+    it("returns blocked status issues", () => {
+      const issue = makeIssue(1, [], "blocked");
+      expect(dag.getBlockedIssues([issue])).toHaveLength(1);
     });
 
-    it("returns tasks with uncleared gates", () => {
-      const dep = makeTask(1, [], "in-progress");
-      const task = makeTask(2, [dep.id]);
-      const blocked = dag.getBlockedTasks([dep, task]);
-      expect(blocked.map((t) => t.id.toString())).toContain("TASK-0002");
+    it("returns issues with uncleared gates", () => {
+      const dep = makeIssue(1, [], "in-progress");
+      const issue = makeIssue(2, [dep.id]);
+      const blocked = dag.getBlockedIssues([dep, issue]);
+      expect(blocked.map((i) => i.id.toString())).toContain("ISSUE-0002");
     });
   });
 });

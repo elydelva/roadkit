@@ -1,22 +1,26 @@
-import type { ADRId } from "../../value-objects/adr-id/adr-id.js";
-import type { TaskId } from "../../value-objects/task-id/task-id.js";
+import type { IssueId } from "../../value-objects/issue-id/issue-id.js";
+import type { ProjectId } from "../../value-objects/project-id/project-id.js";
+import type { SpecId } from "../../value-objects/spec-id/spec-id.js";
 import type { TraceId } from "../../value-objects/trace-id/trace-id.js";
 
 export type TraceEvent =
-  | "adr_created"
-  | "adr_status_changed"
-  | "task_created"
-  | "task_started"
-  | "task_completed"
-  | "task_abandoned"
+  | "project_created"
+  | "milestone_created"
+  | "issue_created"
+  | "issue_started"
+  | "issue_completed"
+  | "issue_abandoned"
+  | "spec_created"
+  | "spec_status_changed"
   | "rules_acknowledged"
   | "note"
   | "synced";
 
 export interface Trace {
   id: TraceId;
-  adrId: ADRId;
-  taskId: TaskId | null;
+  projectId: ProjectId;
+  issueId: IssueId | null;
+  specId: SpecId | null;
   at: Date;
   actor: string;
   actorType: "human" | "agent";
@@ -29,8 +33,9 @@ export interface Trace {
 
 export interface CreateTraceParams {
   id: TraceId;
-  adrId: ADRId;
-  taskId?: TaskId | null;
+  projectId: ProjectId;
+  issueId?: IssueId | null;
+  specId?: SpecId | null;
   actor: string;
   actorType: "human" | "agent";
   event: TraceEvent;
@@ -44,8 +49,9 @@ export const Trace = {
   create(params: CreateTraceParams): Trace {
     return {
       id: params.id,
-      adrId: params.adrId,
-      taskId: params.taskId ?? null,
+      projectId: params.projectId,
+      issueId: params.issueId ?? null,
+      specId: params.specId ?? null,
       at: new Date(),
       actor: params.actor,
       actorType: params.actorType,

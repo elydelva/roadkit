@@ -1,6 +1,10 @@
-export { CreateADRUseCase } from "./create-adr/create-adr.js";
-export { CreateTaskUseCase } from "./create-task/create-task.js";
-export { CompleteTaskUseCase } from "./complete-task/complete-task.js";
+export { CreateProjectUseCase } from "./create-project/create-project.js";
+export { CreateMilestoneUseCase } from "./create-milestone/create-milestone.js";
+export { CreateIssueUseCase } from "./create-issue/create-issue.js";
+export { StartIssueUseCase } from "./start-issue/start-issue.js";
+export { CompleteIssueUseCase } from "./complete-issue/complete-issue.js";
+export { CreateSpecUseCase } from "./create-spec/create-spec.js";
+export { SetSpecStatusUseCase } from "./set-spec-status/set-spec-status.js";
 export { GetNextUseCase } from "./get-next/get-next.js";
 export type { NextResult } from "./get-next/get-next.js";
 export { GetContextUseCase } from "./get-context/get-context.js";
