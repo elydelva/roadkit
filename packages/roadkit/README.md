@@ -1,29 +1,33 @@
-# adrkit
+# roadkit
 
-> *Git tracks what changed. ADRKit tracks why.*
+> *Git tracks what changed. roadkit tracks why.*
 
-Decision-first, agent-native project management system that lives inside your git repository.
+Decision-first, agent-native project management system that lives inside your git repository. Ships the `rkit` CLI.
 
 ## Install
 
 ```bash
-npm install -g adrkit
+npm install -g roadkit
 ```
 
 ## Quick start
 
 ```bash
 cd your-project
-adrkit init
+rkit init
 
-adrkit new --title "Switch auth to JWT" --type tech-choice
-adrkit context --active | pbcopy   # paste into your agent
-adrkit next                         # what to work on next
+rkit project new --title "Auth overhaul"
+rkit milestone new --project PROJ-0001 --title "JWT + refresh tokens"
+rkit issue add --milestone MILE-0001 --title "Implement token rotation"
+rkit spec new --project PROJ-0001 --title "Switch auth to JWT"
+
+rkit context --active | pbcopy   # paste into your agent
+rkit next                         # what to work on next
 ```
 
 ## Documentation
 
-Full documentation in the [GitHub repository](https://github.com/elydelva/adrkit).
+Full documentation in the [GitHub repository](https://github.com/elydelva/roadkit).
 
 ## License
 

@@ -2,11 +2,13 @@
 
 ## Commit conventions
 
-[Conventional Commits](https://www.conventionalcommits.org/). Scope = package name without `@adrkit/` (e.g. `core`, `fs`, `git`, `cli`).
+[Conventional Commits](https://www.conventionalcommits.org/). Scope = package name without `@roadkit/` (e.g. `core`, `fs`, `git`, `lint`, `tui`, `sync`). The CLI package `roadkit` uses the scope `cli`.
 
 ```text
 <type>(<scope>): <description>
 ```
+
+Example: `feat(cli): add rkit history command`
 
 | Type | Changelog | Visible |
 |---|---|---|
