@@ -9,18 +9,62 @@ import {
   writeADRConfig,
 } from "@roadkit/fs";
 
-const ADR_TEMPLATE = `---
+const PROJECT_TEMPLATE = `---
 id: "{{id}}"
 title: "{{title}}"
-status: proposed
+status: planned
+leads: []
 author: "{{author}}"
-phase: ""
-tags: []
-dependsOn: []
-relatedTo: []
-conflictsWith: []
-supersedes: ~
+---
+
+# {{title}}
+
+## Overview
+
+<!-- What is this project about? -->
+`;
+
+const MILESTONE_TEMPLATE = `---
+id: "{{id}}"
+projectId: "{{projectId}}"
+title: "{{title}}"
+status: pending
+order: 0
+targetDate: ~
+---
+
+# {{title}}
+
+<!-- Milestone scope and exit criteria -->
+`;
+
+const ISSUE_TEMPLATE = `---
+id: "{{id}}"
+projectId: "{{projectId}}"
+milestoneId: ~
+title: "{{title}}"
+status: not-started
+priority: none
+estimate: ~
+labels: []
+parentId: ~
+gates: []
 rules: []
+assignee: ~
+author: "{{author}}"
+---
+
+<!-- Issue description -->
+`;
+
+const SPEC_TEMPLATE = `---
+id: "{{id}}"
+projectId: "{{projectId}}"
+title: "{{title}}"
+status: draft
+tags: []
+rules: []
+author: "{{author}}"
 ---
 
 # {{title}}
@@ -38,20 +82,21 @@ rules: []
 <!-- What are the trade-offs? -->
 `;
 
-const TASK_TEMPLATE = `---
-id: "{{id}}"
-adrId: "{{adrId}}"
-title: "{{title}}"
-status: todo
-author: "{{author}}"
-assignee: ~
-estimatedHours: ~
-gates: []
-rules: []
----
+const TEMPLATES: Array<[string, string]> = [
+  ["project", PROJECT_TEMPLATE],
+  ["milestone", MILESTONE_TEMPLATE],
+  ["issue", ISSUE_TEMPLATE],
+  ["spec", SPEC_TEMPLATE],
+];
 
-<!-- Task description -->
-`;
+async function exists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function runInit(realmRoot: string): Promise<void> {
   const roadkitDir = path.join(realmRoot, ROADKIT_DIR);
@@ -61,32 +106,38 @@ export async function runInit(realmRoot: string): Promise<void> {
   await fs.mkdir(templatesDir, { recursive: true });
 
   const stateFile = path.join(roadkitDir, STATE_FILE);
-  try {
-    await fs.access(stateFile);
-  } catch {
-    await fs.writeFile(stateFile, JSON.stringify({ adr: 0, task: 0, trace: 0 }, null, 2), "utf-8");
+  if (!(await exists(stateFile))) {
+    await fs.writeFile(
+      stateFile,
+      JSON.stringify({ project: 0, milestone: 0, issue: 0, spec: 0 }, null, 2),
+      "utf-8"
+    );
   }
 
-  await fs.writeFile(path.join(templatesDir, `adr${MD_EXT}`), ADR_TEMPLATE, "utf-8");
-  await fs.writeFile(path.join(templatesDir, `task${MD_EXT}`), TASK_TEMPLATE, "utf-8");
+  for (const [name, body] of TEMPLATES) {
+    const file = path.join(templatesDir, `${name}${MD_EXT}`);
+    if (!(await exists(file))) {
+      await fs.writeFile(file, body, "utf-8");
+    }
+  }
 
   const configPath = path.join(realmRoot, CONFIG_FILE);
-  try {
-    await fs.access(configPath);
+  if (await exists(configPath)) {
     console.log(`✓ ${CONFIG_FILE} already exists, skipping`);
-  } catch {
+  } else {
     await writeADRConfig(realmRoot, {
-      idFormat: "ADR-XXXX",
-      types: ["tech-choice", "process", "architecture"],
+      idFormat: "PROJ-XXXX",
+      types: ["project", "milestone", "issue", "spec"],
       templates: {},
     });
   }
 
   console.log(`✓ Initialized ${ROADKIT_DIR}/`);
   console.log(`  ${ROADKIT_DIR}/${STATE_FILE}`);
-  console.log(`  ${ROADKIT_DIR}/${TEMPLATES_DIR}/adr${MD_EXT}`);
-  console.log(`  ${ROADKIT_DIR}/${TEMPLATES_DIR}/task${MD_EXT}`);
+  for (const [name] of TEMPLATES) {
+    console.log(`  ${ROADKIT_DIR}/${TEMPLATES_DIR}/${name}${MD_EXT}`);
+  }
   console.log(`  ${CONFIG_FILE}`);
   console.log("");
-  console.log('Next: rkit new --title "My first ADR" --type tech-choice');
+  console.log('Next: rkit project new --title "My first project"');
 }

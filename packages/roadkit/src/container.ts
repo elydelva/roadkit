@@ -1,11 +1,15 @@
 import {
-  CompleteTaskUseCase,
-  CreateADRUseCase,
-  CreateTaskUseCase,
+  CompleteIssueUseCase,
+  CreateIssueUseCase,
+  CreateMilestoneUseCase,
+  CreateProjectUseCase,
+  CreateSpecUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
   GetNextUseCase,
   type IRealmRepository,
+  SetSpecStatusUseCase,
+  StartIssueUseCase,
 } from "@roadkit/core";
 import { FsRealmRepository } from "@roadkit/fs";
 import { GitAdapter } from "@roadkit/git";
@@ -13,9 +17,13 @@ import { GitAdapter } from "@roadkit/git";
 export interface Container {
   realmRoot: string;
   repo: IRealmRepository;
-  createADR: CreateADRUseCase;
-  createTask: CreateTaskUseCase;
-  completeTask: CompleteTaskUseCase;
+  createProject: CreateProjectUseCase;
+  createMilestone: CreateMilestoneUseCase;
+  createIssue: CreateIssueUseCase;
+  startIssue: StartIssueUseCase;
+  completeIssue: CompleteIssueUseCase;
+  createSpec: CreateSpecUseCase;
+  setSpecStatus: SetSpecStatusUseCase;
   getNext: GetNextUseCase;
   getContext: GetContextUseCase;
   getHistory: GetHistoryUseCase;
@@ -23,14 +31,21 @@ export interface Container {
 
 export function createContainer(realmRoot: string): Container {
   const git = new GitAdapter();
+  // Git staging is performed by the repository using absolute, realm-rooted
+  // paths. The use-cases are intentionally constructed without a git adapter to
+  // avoid double-staging with incorrectly-rooted relative paths.
   const repo = new FsRealmRepository(realmRoot, git);
 
   return {
     realmRoot,
     repo,
-    createADR: new CreateADRUseCase(repo),
-    createTask: new CreateTaskUseCase(repo),
-    completeTask: new CompleteTaskUseCase(repo),
+    createProject: new CreateProjectUseCase(repo),
+    createMilestone: new CreateMilestoneUseCase(repo),
+    createIssue: new CreateIssueUseCase(repo),
+    startIssue: new StartIssueUseCase(repo),
+    completeIssue: new CompleteIssueUseCase(repo),
+    createSpec: new CreateSpecUseCase(repo),
+    setSpecStatus: new SetSpecStatusUseCase(repo),
     getNext: new GetNextUseCase(repo),
     getContext: new GetContextUseCase(repo),
     getHistory: new GetHistoryUseCase(repo),

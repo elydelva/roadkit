@@ -1,14 +1,20 @@
-import * as path from "node:path";
 import { Command } from "commander";
 import { runContext } from "./commands/context.js";
 import { runHistory } from "./commands/history.js";
 import { runInit } from "./commands/init.js";
-import { runNew } from "./commands/new.js";
+import { runIssueAdd } from "./commands/issue/add.js";
+import { runIssueComplete } from "./commands/issue/complete.js";
+import { runIssueStart } from "./commands/issue/start.js";
+import { runMilestoneNew } from "./commands/milestone/new.js";
 import { runNext } from "./commands/next.js";
-import { runTaskAdd } from "./commands/task/add.js";
-import { runTaskComplete } from "./commands/task/complete.js";
-import { runTaskStart } from "./commands/task/start.js";
+import { runProjectList } from "./commands/project/list.js";
+import { runProjectNew } from "./commands/project/new.js";
+import { runSpecNew } from "./commands/spec/new.js";
+import { runSpecStatus } from "./commands/spec/status.js";
 import { createContainer } from "./container.js";
+
+// Kept in sync with package.json "version".
+const CLI_VERSION = "0.1.1";
 
 function getRealmRoot(): string {
   return process.env.ROADKIT_ROOT ?? process.cwd();
@@ -20,7 +26,7 @@ export function buildCLI(): Command {
   program
     .name("rkit")
     .description("Decision-first, agent-native project management for git repositories")
-    .version("0.1.1");
+    .version(CLI_VERSION);
 
   program
     .command("init")
@@ -29,88 +35,160 @@ export function buildCLI(): Command {
       await runInit(getRealmRoot());
     });
 
-  program
+  // --- project ---
+  const project = program.command("project").description("Manage projects");
+
+  project
     .command("new")
-    .description("Create a new ADR")
-    .option("--title <title>", "ADR title")
-    .option("--type <type>", "ADR type (tech-choice, process, architecture)")
-    .option("--phase <phase>", "Optional phase")
-    .option("--tags <tags...>", "Tags")
-    .action(async (opts: { title?: string; type?: string; phase?: string; tags?: string[] }) => {
-      const container = createContainer(getRealmRoot());
-      await runNew(container, opts);
+    .description("Create a new project")
+    .requiredOption("--title <title>", "Project title")
+    .option("--leads <leads>", "Comma-separated leads")
+    .option("--body <body>", "Project body")
+    .action(async (opts: { title?: string; leads?: string; body?: string }) => {
+      await runProjectNew(createContainer(getRealmRoot()), opts);
+    });
+
+  project
+    .command("list")
+    .description("List all projects")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { json?: boolean }) => {
+      await runProjectList(createContainer(getRealmRoot()), opts);
+    });
+
+  // --- milestone ---
+  const milestone = program.command("milestone").description("Manage milestones");
+
+  milestone
+    .command("new")
+    .description("Create a new milestone")
+    .requiredOption("--project <id>", "Project id (e.g. PROJ-0001)")
+    .requiredOption("--title <title>", "Milestone title")
+    .requiredOption("--order <n>", "Milestone order")
+    .option("--target-date <iso>", "Target date (ISO 8601)")
+    .option("--body <body>", "Milestone body")
+    .action(
+      async (opts: {
+        project?: string;
+        title?: string;
+        order?: string;
+        targetDate?: string;
+        body?: string;
+      }) => {
+        await runMilestoneNew(createContainer(getRealmRoot()), opts);
+      }
+    );
+
+  // --- issue ---
+  const issue = program.command("issue").description("Manage issues");
+
+  issue
+    .command("add")
+    .description("Add an issue to a project")
+    .requiredOption("--project <id>", "Project id (e.g. PROJ-0001)")
+    .option("--milestone <id>", "Milestone id (e.g. MILE-0001)")
+    .requiredOption("--title <title>", "Issue title")
+    .option("--priority <priority>", "urgent|high|medium|low|none")
+    .option("--estimate <n>", "Estimate")
+    .option("--labels <labels>", "Comma-separated labels")
+    .option("--parent <id>", "Parent issue id")
+    .option("--gates <ids>", "Comma-separated gate ids")
+    .option("--assignee <assignee>", "Assignee")
+    .option("--body <body>", "Issue body")
+    .action(
+      async (opts: {
+        project?: string;
+        milestone?: string;
+        title?: string;
+        priority?: string;
+        estimate?: string;
+        labels?: string;
+        parent?: string;
+        gates?: string;
+        assignee?: string;
+        body?: string;
+      }) => {
+        await runIssueAdd(createContainer(getRealmRoot()), opts);
+      }
+    );
+
+  issue
+    .command("start <issueId>")
+    .description("Mark an issue as in-progress")
+    .action(async (issueId: string) => {
+      await runIssueStart(createContainer(getRealmRoot()), issueId);
+    });
+
+  issue
+    .command("complete <issueId>")
+    .description("Mark an issue as completed")
+    .action(async (issueId: string) => {
+      await runIssueComplete(createContainer(getRealmRoot()), issueId);
+    });
+
+  // --- spec ---
+  const spec = program.command("spec").description("Manage specs");
+
+  spec
+    .command("new")
+    .description("Create a new spec")
+    .requiredOption("--project <id>", "Project id (e.g. PROJ-0001)")
+    .requiredOption("--title <title>", "Spec title")
+    .option("--tags <tags>", "Comma-separated tags")
+    .option("--body <body>", "Spec body")
+    .action(async (opts: { project?: string; title?: string; tags?: string; body?: string }) => {
+      await runSpecNew(createContainer(getRealmRoot()), opts);
+    });
+
+  spec
+    .command("status <specId> <status>")
+    .description("Change a spec's status")
+    .action(async (specId: string, status: string) => {
+      await runSpecStatus(createContainer(getRealmRoot()), specId, status);
+    });
+
+  // --- top-level reads ---
+  program
+    .command("next")
+    .description("Get the next eligible issue to work on")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { json?: boolean }) => {
+      await runNext(createContainer(getRealmRoot()), opts);
     });
 
   program
     .command("context")
-    .description("Dump realm context as JSON")
-    .option("--adr <id>", "Scope to a specific ADR (e.g. ADR-0001)")
-    .option("--active", "Filter to in-progress / active ADRs only")
-    .option("--json", "Output as JSON (default)")
-    .action(async (opts: { adr?: string; active?: boolean; json?: boolean }) => {
-      const container = createContainer(getRealmRoot());
-      await runContext(container, opts);
-    });
-
-  program
-    .command("next")
-    .description("Get the next task to work on")
-    .option("--json", "Machine-readable output")
-    .action(async (opts: { json?: boolean }) => {
-      const container = createContainer(getRealmRoot());
-      await runNext(container, opts);
+    .description("Dump realm context")
+    .option("--project <id>", "Scope to a specific project (e.g. PROJ-0001)")
+    .option("--active", "Filter to active projects only")
+    .option("--json", "Output as JSON")
+    .action(async (opts: { project?: string; active?: boolean; json?: boolean }) => {
+      await runContext(createContainer(getRealmRoot()), opts);
     });
 
   program
     .command("history")
     .description("Show audit trail of events")
-    .option("--adr <id>", "Scope to a specific ADR (e.g. ADR-0001)")
-    .option("--task <id>", "Scope to a specific task (e.g. TASK-0001)")
+    .option("--project <id>", "Scope to a specific project")
+    .option("--issue <id>", "Scope to a specific issue")
+    .option("--spec <id>", "Scope to a specific spec")
     .option("--actor <name>", "Filter by actor")
     .option("--event <event>", "Filter by event type")
     .option("--since <date>", "Filter events after this date (ISO 8601)")
     .option("--json", "Machine-readable output")
     .action(
       async (opts: {
-        adr?: string;
-        task?: string;
+        project?: string;
+        issue?: string;
+        spec?: string;
         actor?: string;
         event?: string;
         since?: string;
         json?: boolean;
       }) => {
-        const container = createContainer(getRealmRoot());
-        await runHistory(container, opts);
+        await runHistory(createContainer(getRealmRoot()), opts);
       }
     );
-
-  const task = program.command("task").description("Manage tasks");
-
-  task
-    .command("add <adrId>")
-    .description("Add a task to an ADR")
-    .requiredOption("--title <title>", "Task title")
-    .option("--gates <gates...>", "Task IDs that must complete first")
-    .action(async (adrId: string, opts: { title: string; gates?: string[] }) => {
-      const container = createContainer(getRealmRoot());
-      await runTaskAdd(container, adrId, opts);
-    });
-
-  task
-    .command("start <taskId>")
-    .description("Mark a task as in-progress")
-    .action(async (taskId: string) => {
-      const container = createContainer(getRealmRoot());
-      await runTaskStart(container, taskId);
-    });
-
-  task
-    .command("complete <taskId>")
-    .description("Mark a task as completed")
-    .action(async (taskId: string) => {
-      const container = createContainer(getRealmRoot());
-      await runTaskComplete(container, taskId);
-    });
 
   return program;
 }

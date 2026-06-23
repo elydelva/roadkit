@@ -1,4 +1,5 @@
 import type { Container } from "../container.js";
+import { serializeIssue, serializeMilestone, serializeProject } from "./shared.js";
 
 interface NextOptions {
   json?: boolean;
@@ -7,39 +8,29 @@ interface NextOptions {
 export async function runNext(container: Container, opts: NextOptions): Promise<void> {
   const result = await container.getNext.execute();
 
-  if (!result) {
-    if (opts.json) {
-      console.log(JSON.stringify(null));
-    } else {
-      console.log("No tasks available.");
-    }
-    return;
-  }
-
   if (opts.json) {
+    if (!result) {
+      console.log(JSON.stringify(null));
+      return;
+    }
     console.log(
       JSON.stringify({
-        task: {
-          id: result.task.id.toString(),
-          adrId: result.task.adrId.toString(),
-          title: result.task.title,
-          status: result.task.status,
-          gates: result.task.gates.map((g) => (typeof g === "string" ? g : g.toString())),
-        },
-        adr: {
-          id: result.adr.id.toString(),
-          title: result.adr.title,
-          phase: result.adr.phase,
-          status: result.adr.status,
-        },
+        issue: serializeIssue(result.issue),
+        project: serializeProject(result.project),
+        milestone: result.milestone ? serializeMilestone(result.milestone) : null,
       })
     );
     return;
   }
 
-  console.log(`${result.task.id.toString()} — ${result.task.title}`);
-  console.log(`  ADR: ${result.adr.id.toString()} — ${result.adr.title}`);
-  if (result.adr.phase) {
-    console.log(`  Phase: ${result.adr.phase}`);
+  if (!result) {
+    console.log("No eligible issue.");
+    return;
   }
+
+  const { issue, project, milestone } = result;
+  const scope = milestone
+    ? `${project.id.toString()} / ${milestone.id.toString()}`
+    : project.id.toString();
+  console.log(`→ ${issue.id.toString()}  ${issue.title}  [${issue.priority}]  (${scope})`);
 }

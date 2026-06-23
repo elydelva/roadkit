@@ -1,65 +1,47 @@
-import type { Trace } from "@roadkit/core";
-import { ADRId, TaskId } from "@roadkit/core";
+import type { HistoryFilter, Trace, TraceEvent } from "@roadkit/core";
+import { IssueId, ProjectId, SpecId } from "@roadkit/core";
 import type { Container } from "../container.js";
+import { fail, serializeTrace } from "./shared.js";
 
 interface HistoryOptions {
-  adr?: string;
+  project?: string;
+  issue?: string;
+  spec?: string;
   actor?: string;
   event?: string;
-  task?: string;
   since?: string;
   json?: boolean;
 }
 
 function formatTrace(trace: Trace): string {
   const at = trace.at.toISOString().replace("T", " ").slice(0, 19);
-  const task = trace.taskId ? ` [${trace.taskId.toString()}]` : "";
+  const refParts: string[] = [];
+  if (trace.issueId) refParts.push(trace.issueId.toString());
+  if (trace.specId) refParts.push(trace.specId.toString());
+  if (trace.ref) refParts.push(`ref:${trace.ref}`);
+  const refs = refParts.length > 0 ? ` [${refParts.join(" ")}]` : "";
   const transition = trace.from && trace.to ? ` (${trace.from} → ${trace.to})` : "";
-  const ref = trace.ref ? ` ref:${trace.ref}` : "";
-  return `${at}  ${trace.event.padEnd(22)}  ${trace.actor}${task}${transition}${ref}`;
+  return `${at}  ${trace.event.padEnd(22)}  ${trace.actor}${refs}${transition}`;
 }
 
 export async function runHistory(container: Container, opts: HistoryOptions): Promise<void> {
-  const filter: Parameters<typeof container.getHistory.execute>[0] = {};
+  const filter: HistoryFilter = {};
 
-  if (opts.adr) filter.adrId = ADRId.from(opts.adr);
+  if (opts.project) filter.projectId = ProjectId.from(opts.project);
+  if (opts.issue) filter.issueId = IssueId.from(opts.issue);
+  if (opts.spec) filter.specId = SpecId.from(opts.spec);
   if (opts.actor) filter.actor = opts.actor;
-  if (opts.event) {
-    // validated by type at runtime — unknown events return no results (trace parser defaults to "note")
-    filter.event = opts.event as NonNullable<typeof filter.event>;
-  }
-  if (opts.task) filter.taskId = TaskId.from(opts.task);
+  if (opts.event) filter.event = opts.event as TraceEvent;
   if (opts.since) {
     const d = new Date(opts.since);
-    if (Number.isNaN(d.getTime())) {
-      console.error(`Invalid date: ${opts.since}`);
-      process.exit(1);
-    }
+    if (Number.isNaN(d.getTime())) fail(`Invalid --since: ${opts.since}`);
     filter.since = d;
   }
 
   const traces = await container.getHistory.execute(filter);
 
   if (opts.json) {
-    console.log(
-      JSON.stringify(
-        traces.map((t) => ({
-          id: t.id.toString(),
-          adrId: t.adrId.toString(),
-          taskId: t.taskId?.toString() ?? null,
-          at: t.at.toISOString(),
-          actor: t.actor,
-          actorType: t.actorType,
-          event: t.event,
-          ref: t.ref,
-          from: t.from,
-          to: t.to,
-          body: t.body,
-        })),
-        null,
-        2
-      )
-    );
+    console.log(JSON.stringify(traces.map(serializeTrace), null, 2));
     return;
   }
 
