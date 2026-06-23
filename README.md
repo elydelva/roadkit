@@ -144,7 +144,7 @@ npm install -g roadkit
 ```bash
 cd your-project
 rkit init
-# → .roadkit/config.yml created
+# → roadfig.yml created
 # → git hooks installed
 # → ready
 ```
