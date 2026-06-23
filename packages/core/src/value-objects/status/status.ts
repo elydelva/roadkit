@@ -18,4 +18,9 @@ export type SpecStatus =
   | "deferred"
   | "abandoned";
 
-export type Priority = "urgent" | "high" | "medium" | "low" | "none";
+/**
+ * Priority levels are fully customizable via `RealmConfig.priority.levels`, so
+ * this is an open string type. The default levels remain
+ * `urgent | high | medium | low | none`.
+ */
+export type Priority = string;
