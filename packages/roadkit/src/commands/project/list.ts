@@ -1,4 +1,5 @@
 import type { Container } from "../../container.js";
+import { getFormatter } from "../output.js";
 import { serializeProject } from "../shared.js";
 
 interface ProjectListOptions {
@@ -11,17 +12,17 @@ export async function runProjectList(
 ): Promise<void> {
   const projects = await container.repo.findAllProjects();
 
-  if (opts.json) {
-    console.log(JSON.stringify(projects.map(serializeProject), null, 2));
-    return;
-  }
+  getFormatter(opts.json ?? false).emit({
+    json: projects.map(serializeProject),
+    human: () => {
+      if (projects.length === 0) {
+        console.log("No projects.");
+        return;
+      }
 
-  if (projects.length === 0) {
-    console.log("No projects.");
-    return;
-  }
-
-  for (const p of projects) {
-    console.log(`${p.id.toString()}  ${p.title}  [${p.status}]`);
-  }
+      for (const p of projects) {
+        console.log(`${p.id.toString()}  ${p.title}  [${p.status}]`);
+      }
+    },
+  });
 }
