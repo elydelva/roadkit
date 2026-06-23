@@ -1,8 +1,8 @@
 {
-  "name": "@adrkit/fs",
+  "name": "@roadkit/fs",
   "version": "0.0.0",
   "private": true,
-  "description": "ADRKit filesystem adapter — IRealmRepository implementation",
+  "description": "roadkit filesystem adapter — IRealmRepository implementation",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -20,7 +20,7 @@
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@adrkit/core": "workspace:*",
+    "@roadkit/core": "workspace:*",
     "gray-matter": "catalog:",
     "js-yaml": "catalog:"
   },

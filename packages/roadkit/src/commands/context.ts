@@ -1,4 +1,4 @@
-import { ADRId } from "@adrkit/core";
+import { ADRId } from "@roadkit/core";
 import type { Container } from "../container.js";
 
 interface ContextOptions {

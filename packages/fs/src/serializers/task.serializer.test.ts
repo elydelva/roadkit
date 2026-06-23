@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { ADRId, Task, TaskId } from "@adrkit/core";
+import { ADRId, Task, TaskId } from "@roadkit/core";
 import { parseTask } from "../parsers/task.parser.js";
 import { serializeTask } from "./task.serializer.js";
 

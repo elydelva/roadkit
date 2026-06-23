@@ -1,6 +1,6 @@
-import type { Rule, Task } from "@adrkit/core";
-import { type ADRId, TaskId } from "@adrkit/core";
-import type { TaskStatus } from "@adrkit/core";
+import type { Rule, Task } from "@roadkit/core";
+import { type ADRId, TaskId } from "@roadkit/core";
+import type { TaskStatus } from "@roadkit/core";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
 function toTaskStatus(val: unknown): TaskStatus {

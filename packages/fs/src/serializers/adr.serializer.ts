@@ -1,4 +1,4 @@
-import type { ADR } from "@adrkit/core";
+import type { ADR } from "@roadkit/core";
 import { stringifyFrontmatter } from "../parsers/frontmatter.parser.js";
 
 export function serializeADR(adr: ADR): string {

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import type { IGitAdapter } from "@adrkit/core";
+import type { IGitAdapter } from "@roadkit/core";
 import { GitCommandError } from "./errors/index.js";
 
 function run(args: string[]): Promise<{ exitCode: number; stderr: string }> {

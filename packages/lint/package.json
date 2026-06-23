@@ -1,8 +1,8 @@
 {
-  "name": "@adrkit/lint",
+  "name": "@roadkit/lint",
   "version": "0.0.0",
   "private": true,
-  "description": "ADRKit lint engine — realm validation rules",
+  "description": "roadkit lint engine — realm validation rules",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -20,8 +20,8 @@
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@adrkit/core": "workspace:*",
-    "@adrkit/fs": "workspace:*"
+    "@roadkit/core": "workspace:*",
+    "@roadkit/fs": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:"

@@ -5,7 +5,7 @@ import {
   TaskNotFoundError,
   Trace,
   TraceId,
-} from "@adrkit/core";
+} from "@roadkit/core";
 import type { Container } from "../../container.js";
 
 export async function runTaskStart(container: Container, taskIdRaw: string): Promise<void> {

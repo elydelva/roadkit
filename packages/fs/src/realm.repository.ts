@@ -9,10 +9,10 @@ import type {
   Task,
   Trace,
   TraceFilter,
-} from "@adrkit/core";
-import type { ADRId, TaskId } from "@adrkit/core";
+} from "@roadkit/core";
+import type { ADRId, TaskId } from "@roadkit/core";
 import { getState, incrementCounter } from "./config/state.manager.js";
-import { ADRKIT_DIR, LOG_DIR, MD_EXT, TASKS_DIR, TRACES_DIR } from "./constants.js";
+import { LOG_DIR, MD_EXT, ROADKIT_DIR, TASKS_DIR, TRACES_DIR } from "./constants.js";
 import { parseADR } from "./parsers/adr.parser.js";
 import { parseTask } from "./parsers/task.parser.js";
 import { parseTrace } from "./parsers/trace.parser.js";
@@ -25,13 +25,13 @@ function adrDirName(id: ADRId): string {
 }
 
 function adrFilePath(realmRoot: string, id: ADRId): string {
-  return path.join(realmRoot, ADRKIT_DIR, LOG_DIR, adrDirName(id), `${id.toString()}${MD_EXT}`);
+  return path.join(realmRoot, ROADKIT_DIR, LOG_DIR, adrDirName(id), `${id.toString()}${MD_EXT}`);
 }
 
 function taskFilePath(realmRoot: string, adrId: ADRId, taskId: TaskId): string {
   return path.join(
     realmRoot,
-    ADRKIT_DIR,
+    ROADKIT_DIR,
     LOG_DIR,
     adrDirName(adrId),
     TASKS_DIR,
@@ -42,22 +42,12 @@ function taskFilePath(realmRoot: string, adrId: ADRId, taskId: TaskId): string {
 function traceFilePath(realmRoot: string, adrId: ADRId, traceId: string): string {
   return path.join(
     realmRoot,
-    ADRKIT_DIR,
+    ROADKIT_DIR,
     LOG_DIR,
     adrDirName(adrId),
     TRACES_DIR,
     `${traceId}${MD_EXT}`
   );
-}
-
-function applyTraceFilter(traces: Trace[], filter: TraceFilter): Trace[] {
-  return traces.filter((t) => {
-    if (filter.taskId && !t.taskId?.equals(filter.taskId)) return false;
-    if (filter.actor && t.actor !== filter.actor) return false;
-    if (filter.event && t.event !== filter.event) return false;
-    if (filter.since && t.at < filter.since) return false;
-    return true;
-  });
 }
 
 function applyTraceFilter(traces: Trace[], filter: TraceFilter): Trace[] {
@@ -85,8 +75,8 @@ export class FsRealmRepository implements IRealmRepository {
     private readonly git?: IGitAdapter
   ) {}
 
-  private get adrKitDir(): string {
-    return path.join(this.realmRoot, ADRKIT_DIR);
+  private get roadkitDir(): string {
+    return path.join(this.realmRoot, ROADKIT_DIR);
   }
 
   async findADR(id: ADRId): Promise<ADR | null> {
@@ -98,7 +88,7 @@ export class FsRealmRepository implements IRealmRepository {
 
   async findAllADRs(): Promise<ADR[]> {
     const adrs: ADR[] = [];
-    const logDir = path.join(this.adrKitDir, LOG_DIR);
+    const logDir = path.join(this.roadkitDir, LOG_DIR);
     let entries: string[];
     try {
       const dirEntries = await fs.readdir(logDir);
@@ -144,7 +134,7 @@ export class FsRealmRepository implements IRealmRepository {
   }
 
   async findTasksForADR(adrId: ADRId): Promise<Task[]> {
-    const tasksDir = path.join(this.adrKitDir, LOG_DIR, adrDirName(adrId), TASKS_DIR);
+    const tasksDir = path.join(this.roadkitDir, LOG_DIR, adrDirName(adrId), TASKS_DIR);
     const tasks: Task[] = [];
     let entries: string[];
     try {
@@ -203,7 +193,7 @@ export class FsRealmRepository implements IRealmRepository {
     const traces: Trace[] = [];
 
     for (const adr of adrs) {
-      const tracesDir = path.join(this.adrKitDir, LOG_DIR, adrDirName(adr.id), TRACES_DIR);
+      const tracesDir = path.join(this.roadkitDir, LOG_DIR, adrDirName(adr.id), TRACES_DIR);
       let entries: string[];
       try {
         entries = await fs.readdir(tracesDir);

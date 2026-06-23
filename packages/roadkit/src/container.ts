@@ -6,9 +6,9 @@ import {
   GetHistoryUseCase,
   GetNextUseCase,
   type IRealmRepository,
-} from "@adrkit/core";
-import { FsRealmRepository } from "@adrkit/fs";
-import { GitAdapter } from "@adrkit/git";
+} from "@roadkit/core";
+import { FsRealmRepository } from "@roadkit/fs";
+import { GitAdapter } from "@roadkit/git";
 
 export interface Container {
   realmRoot: string;

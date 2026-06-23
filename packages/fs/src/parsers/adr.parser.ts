@@ -1,6 +1,6 @@
-import type { ADR, Rule } from "@adrkit/core";
-import { ADRId } from "@adrkit/core";
-import type { ADRStatus } from "@adrkit/core";
+import type { ADR, Rule } from "@roadkit/core";
+import { ADRId } from "@roadkit/core";
+import type { ADRStatus } from "@roadkit/core";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
 function toStringArray(val: unknown): string[] {

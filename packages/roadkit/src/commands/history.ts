@@ -1,5 +1,5 @@
-import type { Trace } from "@adrkit/core";
-import { ADRId, TaskId } from "@adrkit/core";
+import type { Trace } from "@roadkit/core";
+import { ADRId, TaskId } from "@roadkit/core";
 import type { Container } from "../container.js";
 
 interface HistoryOptions {

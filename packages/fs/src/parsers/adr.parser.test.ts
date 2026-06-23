@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { ADRId } from "@adrkit/core";
+import { ADRId } from "@roadkit/core";
 import { serializeADR } from "../serializers/adr.serializer.js";
 import { parseADR } from "./adr.parser.js";
 

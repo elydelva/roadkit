@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { ADRId, TaskId, TraceId } from "@adrkit/core";
-import { Trace } from "@adrkit/core";
+import { ADRId, TaskId, TraceId } from "@roadkit/core";
+import { Trace } from "@roadkit/core";
 import { serializeTrace } from "../serializers/trace.serializer.js";
 import { parseTrace } from "./trace.parser.js";
 

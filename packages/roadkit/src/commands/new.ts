@@ -1,5 +1,5 @@
 import * as readline from "node:readline/promises";
-import { ADRId } from "@adrkit/core";
+import { ADRId } from "@roadkit/core";
 import type { Container } from "../container.js";
 
 interface NewOptions {
@@ -56,5 +56,5 @@ export async function runNew(container: Container, opts: NewOptions): Promise<vo
   });
 
   console.log(`✓ Created ${adr.id.toString()} — ${adr.title}`);
-  console.log(`  .adrkit/${adr.id.toString()}/`);
+  console.log(`  .roadkit/${adr.id.toString()}/`);
 }

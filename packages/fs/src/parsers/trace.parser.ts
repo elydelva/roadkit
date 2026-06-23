@@ -1,5 +1,5 @@
-import type { Trace, TraceEvent } from "@adrkit/core";
-import { ADRId, TaskId, TraceId } from "@adrkit/core";
+import type { Trace, TraceEvent } from "@roadkit/core";
+import { ADRId, TaskId, TraceId } from "@roadkit/core";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
 function toTraceEvent(val: unknown): TraceEvent {

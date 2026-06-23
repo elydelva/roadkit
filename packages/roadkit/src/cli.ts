@@ -11,20 +11,20 @@ import { runTaskStart } from "./commands/task/start.js";
 import { createContainer } from "./container.js";
 
 function getRealmRoot(): string {
-  return process.env.ADRKIT_ROOT ?? process.cwd();
+  return process.env.ROADKIT_ROOT ?? process.cwd();
 }
 
 export function buildCLI(): Command {
   const program = new Command();
 
   program
-    .name("adrkit")
+    .name("rkit")
     .description("Decision-first, agent-native project management for git repositories")
     .version("0.1.1");
 
   program
     .command("init")
-    .description("Initialize ADRKit in the current repository")
+    .description("Initialize roadkit in the current repository")
     .action(async () => {
       await runInit(getRealmRoot());
     });

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import type { Trace, TraceFilter } from "@adrkit/core";
-import { ADRId, TaskId, TraceId } from "@adrkit/core";
-import { Trace as TraceFactory } from "@adrkit/core";
-import type { IRealmRepository } from "@adrkit/core";
+import type { Trace, TraceFilter } from "@roadkit/core";
+import { ADRId, TaskId, TraceId } from "@roadkit/core";
+import { Trace as TraceFactory } from "@roadkit/core";
+import type { IRealmRepository } from "@roadkit/core";
 import { GetHistoryUseCase } from "./get-history.js";
 
 function makeTrace(

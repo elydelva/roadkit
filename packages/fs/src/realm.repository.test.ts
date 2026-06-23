@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ADR, ADRId, Task, TaskId, Trace, TraceId } from "@adrkit/core";
+import { ADR, ADRId, Task, TaskId, Trace, TraceId } from "@roadkit/core";
 import { FsRealmRepository } from "./realm.repository.js";
 
 async function mkTempDir(): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), "adrkit-test-"));
+  return fs.mkdtemp(path.join(os.tmpdir(), "roadkit-test-"));
 }
 
 describe("FsRealmRepository", () => {
@@ -128,7 +128,14 @@ describe("FsRealmRepository", () => {
         event: "adr_created",
       });
       await repo.appendTrace(trace);
-      const tracePath = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces", "TRACE-0001.md");
+      const tracePath = path.join(
+        tempDir,
+        ".roadkit",
+        "log",
+        "ADR-0001",
+        "traces",
+        "TRACE-0001.md"
+      );
       const exists = await fs
         .access(tracePath)
         .then(() => true)
@@ -302,7 +309,7 @@ describe("FsRealmRepository", () => {
         event: "adr_created",
       });
       // Manually set an older timestamp by writing the file directly
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
+      const tracesDir = path.join(tempDir, ".roadkit", "log", "ADR-0001", "traces");
       await fs.mkdir(tracesDir, { recursive: true });
       const oldContent = `---\nid: TRACE-0001\nadrId: ADR-0001\ntaskId: null\nat: '2020-01-01T00:00:00.000Z'\nactor: alice\nactorType: human\nevent: adr_created\nref: null\nfrom: null\nto: null\n---\n`;
       await fs.writeFile(path.join(tracesDir, "TRACE-0001.md"), oldContent, "utf-8");
@@ -336,7 +343,7 @@ describe("FsRealmRepository", () => {
         })
       );
       // Write a non-.md file in traces dir
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
+      const tracesDir = path.join(tempDir, ".roadkit", "log", "ADR-0001", "traces");
       await fs.writeFile(path.join(tracesDir, ".DS_Store"), "junk", "utf-8");
 
       const traces = await repo.findTraces({});
@@ -348,7 +355,7 @@ describe("FsRealmRepository", () => {
       const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
       await repo.saveADR(adr);
 
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
+      const tracesDir = path.join(tempDir, ".roadkit", "log", "ADR-0001", "traces");
       await fs.mkdir(tracesDir, { recursive: true });
       await fs.writeFile(path.join(tracesDir, "TRACE-0001.md"), "---\nid: BAD_ID\n---\n", "utf-8");
       await repo.appendTrace(

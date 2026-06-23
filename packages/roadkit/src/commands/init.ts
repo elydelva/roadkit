@@ -1,13 +1,13 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import {
-  ADRKIT_DIR,
   CONFIG_FILE,
   MD_EXT,
+  ROADKIT_DIR,
   STATE_FILE,
   TEMPLATES_DIR,
   writeADRConfig,
-} from "@adrkit/fs";
+} from "@roadkit/fs";
 
 const ADR_TEMPLATE = `---
 id: "{{id}}"
@@ -54,13 +54,13 @@ rules: []
 `;
 
 export async function runInit(realmRoot: string): Promise<void> {
-  const adrKitDir = path.join(realmRoot, ADRKIT_DIR);
-  const templatesDir = path.join(adrKitDir, TEMPLATES_DIR);
+  const roadkitDir = path.join(realmRoot, ROADKIT_DIR);
+  const templatesDir = path.join(roadkitDir, TEMPLATES_DIR);
 
-  await fs.mkdir(adrKitDir, { recursive: true });
+  await fs.mkdir(roadkitDir, { recursive: true });
   await fs.mkdir(templatesDir, { recursive: true });
 
-  const stateFile = path.join(adrKitDir, STATE_FILE);
+  const stateFile = path.join(roadkitDir, STATE_FILE);
   try {
     await fs.access(stateFile);
   } catch {
@@ -73,7 +73,7 @@ export async function runInit(realmRoot: string): Promise<void> {
   const configPath = path.join(realmRoot, CONFIG_FILE);
   try {
     await fs.access(configPath);
-    console.log("✓ .adrconfig already exists, skipping");
+    console.log(`✓ ${CONFIG_FILE} already exists, skipping`);
   } catch {
     await writeADRConfig(realmRoot, {
       idFormat: "ADR-XXXX",
@@ -82,11 +82,11 @@ export async function runInit(realmRoot: string): Promise<void> {
     });
   }
 
-  console.log(`✓ Initialized ${ADRKIT_DIR}/`);
-  console.log(`  ${ADRKIT_DIR}/${STATE_FILE}`);
-  console.log(`  ${ADRKIT_DIR}/${TEMPLATES_DIR}/adr${MD_EXT}`);
-  console.log(`  ${ADRKIT_DIR}/${TEMPLATES_DIR}/task${MD_EXT}`);
+  console.log(`✓ Initialized ${ROADKIT_DIR}/`);
+  console.log(`  ${ROADKIT_DIR}/${STATE_FILE}`);
+  console.log(`  ${ROADKIT_DIR}/${TEMPLATES_DIR}/adr${MD_EXT}`);
+  console.log(`  ${ROADKIT_DIR}/${TEMPLATES_DIR}/task${MD_EXT}`);
   console.log(`  ${CONFIG_FILE}`);
   console.log("");
-  console.log('Next: adrkit new --title "My first ADR" --type tech-choice');
+  console.log('Next: rkit new --title "My first ADR" --type tech-choice');
 }

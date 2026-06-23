@@ -1,16 +1,16 @@
 {
-  "name": "adrkit",
+  "name": "roadkit",
   "version": "0.1.1",
   "description": "Decision-first, agent-native project management system for git repositories",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elydelva/adrkit.git"
+    "url": "git+https://github.com/elydelva/roadkit.git"
   },
   "keywords": ["adr", "architecture", "decision-record", "cli", "agent", "git"],
   "bin": {
-    "adrkit": "./dist/index.js"
+    "rkit": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -24,12 +24,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@adrkit/core": "workspace:*",
-    "@adrkit/fs": "workspace:*",
-    "@adrkit/git": "workspace:*",
-    "@adrkit/lint": "workspace:*",
-    "@adrkit/tui": "workspace:*",
-    "@adrkit/sync": "workspace:*",
+    "@roadkit/core": "workspace:*",
+    "@roadkit/fs": "workspace:*",
+    "@roadkit/git": "workspace:*",
+    "@roadkit/lint": "workspace:*",
+    "@roadkit/tui": "workspace:*",
+    "@roadkit/sync": "workspace:*",
     "commander": "catalog:"
   },
   "devDependencies": {

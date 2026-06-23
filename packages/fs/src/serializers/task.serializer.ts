@@ -1,5 +1,5 @@
-import type { Task } from "@adrkit/core";
-import { TaskId } from "@adrkit/core";
+import type { Task } from "@roadkit/core";
+import { TaskId } from "@roadkit/core";
 import { stringifyFrontmatter } from "../parsers/frontmatter.parser.js";
 
 export function serializeTask(task: Task): string {

@@ -1,5 +1,5 @@
 export {
-  ADRKIT_DIR,
+  ROADKIT_DIR,
   LOG_DIR,
   STATE_FILE,
   CONFIG_FILE,
