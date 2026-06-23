@@ -1,6 +1,13 @@
-import { IssueId, MilestoneId, ProjectId, resolveEstimate } from "@roadkit/core";
+import { IssueId, MilestoneId } from "@roadkit/core";
 import type { Container } from "../../container.js";
-import { fail, parseList, resolveAuthor } from "../shared.js";
+import { parseList, resolveAuthor } from "../shared.js";
+import {
+  parseProjectId,
+  requireOption,
+  resolveEstimate,
+  resolvePriority,
+  validateLabelsAgainstTaxonomy,
+} from "../validators.js";
 
 interface IssueAddOptions {
   project?: string;
@@ -16,46 +23,19 @@ interface IssueAddOptions {
 }
 
 export async function runIssueAdd(container: Container, opts: IssueAddOptions): Promise<void> {
-  if (!opts.project) fail("--project is required");
-  if (!opts.title) fail("--title is required");
+  const projectId = parseProjectId(opts.project);
+  const title = requireOption(opts.title, "--title");
 
-  const { levels, default: defaultPriority } = container.config.priority;
-
-  let priority: string;
-  if (opts.priority !== undefined) {
-    if (!levels.includes(opts.priority)) {
-      fail(`Invalid --priority: ${opts.priority} (expected ${levels.join("|")})`);
-    }
-    priority = opts.priority;
-  } else {
-    priority = defaultPriority;
-  }
-
-  let estimate: number | undefined;
-  if (opts.estimate !== undefined) {
-    try {
-      estimate = resolveEstimate(container.config, opts.estimate);
-    } catch (err) {
-      fail(`Invalid --estimate: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
+  const priority = resolvePriority(opts.priority, container.config);
+  const estimate = resolveEstimate(opts.estimate, container.config);
 
   const labels = parseList(opts.labels);
-  const taxonomy = container.config.labels;
-  if (taxonomy.length > 0) {
-    const allowed = new Set(taxonomy.map((l) => l.name));
-    const unknown = labels.filter((l) => !allowed.has(l));
-    if (unknown.length > 0) {
-      fail(
-        `Invalid --labels: ${unknown.join(", ")} (allowed: ${taxonomy.map((l) => l.name).join(", ")})`
-      );
-    }
-  }
+  validateLabelsAgainstTaxonomy(labels, container.config);
 
   const author = resolveAuthor();
   const issue = await container.createIssue.execute({
-    projectId: ProjectId.from(opts.project),
-    title: opts.title,
+    projectId,
+    title,
     author,
     priority,
     ...(opts.milestone ? { milestoneId: MilestoneId.from(opts.milestone) } : {}),
