@@ -1,33 +1,56 @@
-import type { ADR } from "../../entities/adr/adr.js";
-import type { Task } from "../../entities/task/task.js";
+import type { Issue } from "../../entities/issue/issue.js";
+import type { Milestone } from "../../entities/milestone/milestone.js";
+import type { Project } from "../../entities/project/project.js";
+import type { Spec } from "../../entities/spec/spec.js";
 import type { Trace, TraceEvent } from "../../entities/trace/trace.js";
-import type { ADRId } from "../../value-objects/adr-id/adr-id.js";
-import type { TaskId } from "../../value-objects/task-id/task-id.js";
+import type { IssueId } from "../../value-objects/issue-id/issue-id.js";
+import type { MilestoneId } from "../../value-objects/milestone-id/milestone-id.js";
+import type { ProjectId } from "../../value-objects/project-id/project-id.js";
+import type { SpecId } from "../../value-objects/spec-id/spec-id.js";
 
 export interface TraceFilter {
-  adrId?: ADRId;
-  taskId?: TaskId;
+  projectId?: ProjectId;
+  issueId?: IssueId;
+  specId?: SpecId;
   actor?: string;
   event?: TraceEvent;
   since?: Date;
 }
 
-export type CounterKey = "adr" | "task" | "trace";
+export type CounterKey = "project" | "milestone" | "issue" | "spec";
 
 export interface RealmState {
-  counters: Record<CounterKey, number>;
+  counters: {
+    project: number;
+    milestone: number;
+    issue: number;
+    spec: number;
+  };
 }
 
 export interface IRealmRepository {
-  findADR(id: ADRId): Promise<ADR | null>;
-  findAllADRs(): Promise<ADR[]>;
-  saveADR(adr: ADR): Promise<void>;
-  findTask(id: TaskId): Promise<Task | null>;
-  findTasksForADR(adrId: ADRId): Promise<Task[]>;
-  findAllTasks(): Promise<Task[]>;
-  saveTask(task: Task): Promise<void>;
+  findProject(id: ProjectId): Promise<Project | null>;
+  findAllProjects(): Promise<Project[]>;
+  saveProject(project: Project): Promise<void>;
+
+  findMilestone(id: MilestoneId): Promise<Milestone | null>;
+  findMilestonesForProject(projectId: ProjectId): Promise<Milestone[]>;
+  findAllMilestones(): Promise<Milestone[]>;
+  saveMilestone(milestone: Milestone): Promise<void>;
+
+  findIssue(id: IssueId): Promise<Issue | null>;
+  findIssuesForProject(projectId: ProjectId): Promise<Issue[]>;
+  findAllIssues(): Promise<Issue[]>;
+  saveIssue(issue: Issue): Promise<void>;
+
+  findSpec(id: SpecId): Promise<Spec | null>;
+  findSpecsForProject(projectId: ProjectId): Promise<Spec[]>;
+  findAllSpecs(): Promise<Spec[]>;
+  saveSpec(spec: Spec): Promise<void>;
+
   appendTrace(trace: Trace): Promise<void>;
   findTraces(filter: TraceFilter): Promise<Trace[]>;
+
   getState(): Promise<RealmState>;
   incrementCounter(entity: CounterKey): Promise<number>;
 }

@@ -26,13 +26,13 @@
 
 Both templates share: `bun test`, `bun run typecheck`, `bun run lint` must pass.
 
-- **feature.md** — Notable changes must be non-obvious (not a commit paraphrase). Must include `Closes #N`. Also verify no regressions in `adrkit context` or `adrkit next` output.
+- **feature.md** — Notable changes must be non-obvious (not a commit paraphrase). Must include `Closes #N`. Also verify no regressions in `rkit context` or `rkit next` output.
 - **bugfix.md** — Must add a non-regression test or explicitly justify its absence. Includes before/after output snippet.
 
 ## Issue requirements
 
-- **Bug Report** (`bug.yml`) — auto-labels `bug, triage`. Required: observed behavior, expected behavior, reproduction steps, adrkit version, OS, impact level.
-- **Feature Request** (`feature.yml`) — auto-labels `enhancement, triage`. Required: context (problem/motivation), goal, acceptance criteria. Before opening, check if a related ADR already exists in `.adrkit/`.
+- **Bug Report** (`bug.yml`) — auto-labels `bug, triage`. Required: observed behavior, expected behavior, reproduction steps, roadkit version, OS, impact level.
+- **Feature Request** (`feature.yml`) — auto-labels `enhancement, triage`. Required: context (problem/motivation), goal, acceptance criteria. Before opening, check if a related ADR already exists in `docs/adr/`.
 
 ## CLI
 

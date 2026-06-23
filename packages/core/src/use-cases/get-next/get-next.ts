@@ -1,12 +1,21 @@
-import type { ADR } from "../../entities/index.js";
-import type { Task } from "../../entities/index.js";
+import type { Issue, Milestone, Project } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { DAGService } from "../../services/index.js";
+import type { Priority } from "../../value-objects/index.js";
 
 export interface NextResult {
-  task: Task;
-  adr: ADR;
+  issue: Issue;
+  project: Project;
+  milestone: Milestone | null;
 }
+
+const PRIORITY_RANK: Record<Priority, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  none: 4,
+};
 
 export class GetNextUseCase {
   private readonly dagService = new DAGService();
@@ -14,29 +23,31 @@ export class GetNextUseCase {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(): Promise<NextResult | null> {
-    const [allTasks, allADRs] = await Promise.all([
-      this.repo.findAllTasks(),
-      this.repo.findAllADRs(),
+    const [allIssues, allProjects, allMilestones] = await Promise.all([
+      this.repo.findAllIssues(),
+      this.repo.findAllProjects(),
+      this.repo.findAllMilestones(),
     ]);
 
-    const eligible = this.dagService.getEligibleTasks(allTasks, allADRs);
+    const eligible = this.dagService.getEligibleIssues(allIssues, allProjects, allMilestones);
     if (eligible.length === 0) return null;
 
-    const adrMap = new Map(allADRs.map((a) => [a.id.toString(), a]));
+    const projectMap = new Map(allProjects.map((p) => [p.id.toString(), p]));
+    const milestoneMap = new Map(allMilestones.map((m) => [m.id.toString(), m]));
 
-    // Sort: phase alphabetically → ADR createdAt → task createdAt
+    const milestoneFor = (issue: Issue): Milestone | null =>
+      issue.milestoneId ? (milestoneMap.get(issue.milestoneId.toString()) ?? null) : null;
+
+    // Sort: priority rank ASC → milestone.order ASC (null milestone last) → issue createdAt ASC
     const sorted = eligible.slice().sort((a, b) => {
-      const adrA = adrMap.get(a.adrId.toString());
-      const adrB = adrMap.get(b.adrId.toString());
+      const prioCmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+      if (prioCmp !== 0) return prioCmp;
 
-      const phaseA = adrA?.phase ?? "";
-      const phaseB = adrB?.phase ?? "";
-      const phaseCmp = phaseA.localeCompare(phaseB);
-      if (phaseCmp !== 0) return phaseCmp;
-
-      const adrCreatedA = adrA?.createdAt.getTime() ?? 0;
-      const adrCreatedB = adrB?.createdAt.getTime() ?? 0;
-      if (adrCreatedA !== adrCreatedB) return adrCreatedA - adrCreatedB;
+      const mA = milestoneFor(a);
+      const mB = milestoneFor(b);
+      const orderA = mA ? mA.order : Number.POSITIVE_INFINITY;
+      const orderB = mB ? mB.order : Number.POSITIVE_INFINITY;
+      if (orderA !== orderB) return orderA - orderB;
 
       return a.createdAt.getTime() - b.createdAt.getTime();
     });
@@ -44,9 +55,9 @@ export class GetNextUseCase {
     const first = sorted[0];
     if (!first) return null;
 
-    const adr = adrMap.get(first.adrId.toString());
-    if (!adr) return null;
+    const project = projectMap.get(first.projectId.toString());
+    if (!project) return null;
 
-    return { task: first, adr };
+    return { issue: first, project, milestone: milestoneFor(first) };
   }
 }

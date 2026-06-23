@@ -1,15 +1,17 @@
-import type { ADR, Task, Trace } from "../../entities/index.js";
+import type { Issue, Milestone, Project, Spec, Trace } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
-import type { ADRId } from "../../value-objects/index.js";
+import type { ProjectId } from "../../value-objects/index.js";
 
 export interface ContextFilter {
-  adrId?: ADRId;
+  projectId?: ProjectId;
   activeOnly?: boolean;
 }
 
 export interface RealmContext {
-  adrs: ADR[];
-  tasks: Task[];
+  projects: Project[];
+  milestones: Milestone[];
+  issues: Issue[];
+  specs: Spec[];
   traces: Trace[];
 }
 
@@ -17,23 +19,30 @@ export class GetContextUseCase {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(filter: ContextFilter = {}): Promise<RealmContext> {
-    let adrs = filter.adrId
-      ? await this.repo.findADR(filter.adrId).then((a) => (a ? [a] : []))
-      : await this.repo.findAllADRs();
+    let projects = filter.projectId
+      ? await this.repo.findProject(filter.projectId).then((p) => (p ? [p] : []))
+      : await this.repo.findAllProjects();
 
     if (filter.activeOnly) {
-      adrs = adrs.filter(
-        (a) => a.status === "accepted" || a.status === "in-progress" || a.status === "proposed"
-      );
+      projects = projects.filter((p) => p.status === "active");
     }
 
-    const adrIds = new Set(adrs.map((a) => a.id.toString()));
+    const projectIds = new Set(projects.map((p) => p.id.toString()));
 
-    const allTasks = await this.repo.findAllTasks();
-    const tasks = allTasks.filter((t) => adrIds.has(t.adrId.toString()));
+    const [allMilestones, allIssues, allSpecs] = await Promise.all([
+      this.repo.findAllMilestones(),
+      this.repo.findAllIssues(),
+      this.repo.findAllSpecs(),
+    ]);
 
-    const traces = await this.repo.findTraces(filter.adrId ? { adrId: filter.adrId } : {});
+    const milestones = allMilestones.filter((m) => projectIds.has(m.projectId.toString()));
+    const issues = allIssues.filter((i) => projectIds.has(i.projectId.toString()));
+    const specs = allSpecs.filter((s) => projectIds.has(s.projectId.toString()));
 
-    return { adrs, tasks, traces };
+    const traces = await this.repo.findTraces(
+      filter.projectId ? { projectId: filter.projectId } : {}
+    );
+
+    return { projects, milestones, issues, specs, traces };
   }
 }

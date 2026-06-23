@@ -1,11 +1,12 @@
-import type { Trace } from "@adrkit/core";
+import type { Trace } from "@roadkit/core";
 import { stringifyFrontmatter } from "../parsers/frontmatter.parser.js";
 
 export function serializeTrace(trace: Trace): string {
   const data: Record<string, unknown> = {
     id: trace.id.toString(),
-    adrId: trace.adrId.toString(),
-    taskId: trace.taskId?.toString() ?? null,
+    projectId: trace.projectId.toString(),
+    issueId: trace.issueId?.toString() ?? null,
+    specId: trace.specId?.toString() ?? null,
     at: trace.at.toISOString(),
     actor: trace.actor,
     actorType: trace.actorType,

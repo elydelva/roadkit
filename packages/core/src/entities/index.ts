@@ -1,6 +1,11 @@
-export { ADR } from "./adr/adr.js";
-export type { CreateADRParams, Rule } from "./adr/adr.js";
-export { Task } from "./task/task.js";
-export type { CreateTaskParams } from "./task/task.js";
+export type { Rule } from "./rule/rule.js";
+export { Project } from "./project/project.js";
+export type { CreateProjectParams } from "./project/project.js";
+export { Milestone } from "./milestone/milestone.js";
+export type { CreateMilestoneParams } from "./milestone/milestone.js";
+export { Issue } from "./issue/issue.js";
+export type { CreateIssueParams } from "./issue/issue.js";
+export { Spec } from "./spec/spec.js";
+export type { CreateSpecParams } from "./spec/spec.js";
 export { Trace } from "./trace/trace.js";
 export type { TraceEvent, CreateTraceParams } from "./trace/trace.js";

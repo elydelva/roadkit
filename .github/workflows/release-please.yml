@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
-      adrkit_version: ${{ steps.release.outputs['packages/adrkit--tag_name'] }}
+      roadkit_version: ${{ steps.release.outputs['packages/roadkit--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -52,8 +52,8 @@ jobs:
       - name: Compile binary
         run: bun run build:bin
 
-      - name: Publish adrkit to npm
+      - name: Publish roadkit to npm
         run: bun publish --access public
-        working-directory: packages/adrkit
+        working-directory: packages/roadkit
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

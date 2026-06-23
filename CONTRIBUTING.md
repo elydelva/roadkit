@@ -18,7 +18,7 @@ Requires [Bun](https://bun.sh) ≥ 1.3.
 | `bun run lint` | Lint with Biome |
 | `bun run check` | Lint + format (auto-fix) |
 | `bun run build` | Build all packages |
-| `bun run build:bin` | Compile standalone `adrkit` binary |
+| `bun run build:bin` | Compile standalone `rkit` binary |
 
 ## Workflow
 
@@ -61,17 +61,17 @@ Breaking changes: add `!` after the type (`feat(core)!:`) or a `BREAKING CHANGE:
 
 ```text
 packages/
-  core/     @adrkit/core    — domain, ports, use cases
-  fs/       @adrkit/fs      — filesystem adapter
-  git/      @adrkit/git     — git adapter
-  lint/     @adrkit/lint    — validation engine
-  tui/      @adrkit/tui     — terminal interface
-  sync/     @adrkit/sync    — external adapters (Linear, GitHub)
-  adrkit/   adrkit          — published binary (entry point + DI)
+  core/     @roadkit/core   — domain, ports, use cases
+  fs/       @roadkit/fs     — filesystem adapter
+  git/      @roadkit/git    — git adapter
+  lint/     @roadkit/lint   — validation engine
+  tui/      @roadkit/tui    — terminal interface
+  sync/     @roadkit/sync   — external adapters (Linear, GitHub)
+  roadkit/  roadkit         — published binary `rkit` (entry point + DI)
 docs/       — founding paper, architecture, v0.x scope docs
 ```
 
-Only `adrkit` is published to npm. All `@adrkit/*` packages are private (monorepo-only) in v1.
+Only `roadkit` (the `rkit` binary) is published to npm. All `@roadkit/*` packages are private (monorepo-only) in v1.
 
 ## Code quality
 

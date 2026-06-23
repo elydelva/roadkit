@@ -2,11 +2,27 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ADR, ADRId, Task, TaskId, Trace, TraceId } from "@adrkit/core";
+import {
+  Issue,
+  IssueId,
+  Milestone,
+  MilestoneId,
+  Project,
+  ProjectId,
+  Spec,
+  SpecId,
+  Trace,
+  TraceId,
+} from "@roadkit/core";
+import { ROADKIT_DIR } from "./constants.js";
 import { FsRealmRepository } from "./realm.repository.js";
 
 async function mkTempDir(): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), "adrkit-test-"));
+  return fs.mkdtemp(path.join(os.tmpdir(), "roadkit-test-"));
+}
+
+function makeProject(id = "PROJ-0001", title = "My Project"): Project {
+  return Project.create({ id: ProjectId.from(id), title, author: "alice" });
 }
 
 describe("FsRealmRepository", () => {
@@ -22,385 +38,269 @@ describe("FsRealmRepository", () => {
     await fs.rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("ADR CRUD", () => {
-    it("returns null for non-existent ADR", async () => {
-      const result = await repo.findADR(ADRId.from("ADR-0001"));
-      expect(result).toBeNull();
+  describe("Project CRUD", () => {
+    it("returns null for a non-existent project", async () => {
+      expect(await repo.findProject(ProjectId.from("PROJ-0001"))).toBeNull();
     });
 
-    it("saves and retrieves an ADR", async () => {
-      const adr = ADR.create({
-        id: ADRId.from("ADR-0001"),
-        title: "Test ADR",
-        author: "alice",
-      });
-      await repo.saveADR(adr);
-      const found = await repo.findADR(adr.id);
-      expect(found).not.toBeNull();
-      expect(found?.id.toString()).toBe("ADR-0001");
-      expect(found?.title).toBe("Test ADR");
+    it("saves and retrieves a project", async () => {
+      const project = makeProject();
+      await repo.saveProject(project);
+      const found = await repo.findProject(project.id);
+      expect(found?.id.toString()).toBe("PROJ-0001");
+      expect(found?.title).toBe("My Project");
     });
 
-    it("findAllADRs returns empty when no ADRs exist", async () => {
-      const adrs = await repo.findAllADRs();
-      expect(adrs).toHaveLength(0);
+    it("writes the project file with a slugged dir but un-slugged filename", async () => {
+      await repo.saveProject(makeProject("PROJ-0001", "Hello World!"));
+      const projectsRoot = path.join(tempDir, ROADKIT_DIR, "projects");
+      const dirs = await fs.readdir(projectsRoot);
+      expect(dirs).toContain("PROJ-0001-hello-world");
+      const files = await fs.readdir(path.join(projectsRoot, "PROJ-0001-hello-world"));
+      expect(files).toContain("PROJ-0001.md");
     });
 
-    it("findAllADRs returns all saved ADRs", async () => {
-      await repo.saveADR(
-        ADR.create({ id: ADRId.from("ADR-0001"), title: "First", author: "alice" })
+    it("identity comes from frontmatter, not filename", async () => {
+      const project = makeProject("PROJ-0042", "Rename Me");
+      await repo.saveProject(project);
+      // Rename the dir to a different slug — id still resolves.
+      const projectsRoot = path.join(tempDir, ROADKIT_DIR, "projects");
+      await fs.rename(
+        path.join(projectsRoot, "PROJ-0042-rename-me"),
+        path.join(projectsRoot, "PROJ-0042-something-else")
       );
-      await repo.saveADR(
-        ADR.create({ id: ADRId.from("ADR-0002"), title: "Second", author: "bob" })
-      );
-      const adrs = await repo.findAllADRs();
-      expect(adrs).toHaveLength(2);
+      const found = await repo.findProject(ProjectId.from("PROJ-0042"));
+      expect(found?.title).toBe("Rename Me");
+    });
+
+    it("re-saving reuses the existing directory", async () => {
+      await repo.saveProject(makeProject("PROJ-0001", "Original Title"));
+      await repo.saveProject({ ...makeProject("PROJ-0001", "Original Title"), title: "Updated" });
+      const projectsRoot = path.join(tempDir, ROADKIT_DIR, "projects");
+      const dirs = await fs.readdir(projectsRoot);
+      expect(dirs).toEqual(["PROJ-0001-original-title"]);
+      const found = await repo.findProject(ProjectId.from("PROJ-0001"));
+      expect(found?.title).toBe("Updated");
+    });
+
+    it("findAllProjects returns every project", async () => {
+      await repo.saveProject(makeProject("PROJ-0001", "One"));
+      await repo.saveProject(makeProject("PROJ-0002", "Two"));
+      const all = await repo.findAllProjects();
+      expect(all.map((p) => p.id.toString()).sort()).toEqual(["PROJ-0001", "PROJ-0002"]);
     });
   });
 
-  describe("Task CRUD", () => {
-    it("returns null for non-existent task", async () => {
-      // need an ADR first so dir exists — but findTask scans all ADRs
-      const result = await repo.findTask(TaskId.from("TASK-0001"));
-      expect(result).toBeNull();
+  describe("Milestone CRUD", () => {
+    beforeEach(async () => {
+      await repo.saveProject(makeProject());
     });
 
-    it("saves and retrieves a task", async () => {
-      const adr = ADR.create({ id: ADRId.from("ADR-0001"), title: "ADR", author: "alice" });
-      await repo.saveADR(adr);
-      const task = Task.create({
-        id: TaskId.from("TASK-0001"),
-        adrId: adr.id,
-        title: "Do something",
-        author: "alice",
+    it("saves and finds a milestone", async () => {
+      const m = Milestone.create({
+        id: MilestoneId.from("MILE-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "Phase One",
+        order: 1,
       });
-      await repo.saveTask(task);
-      const found = await repo.findTask(task.id);
-      expect(found).not.toBeNull();
-      expect(found?.id.toString()).toBe("TASK-0001");
-      expect(found?.title).toBe("Do something");
-    });
-
-    it("findTasksForADR returns tasks for that ADR", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "ADR", author: "alice" });
-      await repo.saveADR(adr);
-      await repo.saveTask(
-        Task.create({ id: TaskId.from("TASK-0001"), adrId, title: "T1", author: "alice" })
-      );
-      await repo.saveTask(
-        Task.create({ id: TaskId.from("TASK-0002"), adrId, title: "T2", author: "alice" })
-      );
-      const tasks = await repo.findTasksForADR(adrId);
-      expect(tasks).toHaveLength(2);
+      await repo.saveMilestone(m);
+      const found = await repo.findMilestone(m.id);
+      expect(found?.title).toBe("Phase One");
+      expect(await repo.findMilestonesForProject(ProjectId.from("PROJ-0001"))).toHaveLength(1);
+      expect(await repo.findAllMilestones()).toHaveLength(1);
     });
   });
 
-  describe("counters", () => {
-    it("increments counter and returns new value", async () => {
-      const v1 = await repo.incrementCounter("adr");
-      const v2 = await repo.incrementCounter("adr");
-      expect(v1).toBe(1);
-      expect(v2).toBe(2);
+  describe("Issue CRUD", () => {
+    beforeEach(async () => {
+      await repo.saveProject(makeProject("PROJ-0001", "One"));
+      await repo.saveProject(makeProject("PROJ-0002", "Two"));
     });
 
-    it("getState returns current counters", async () => {
-      await repo.incrementCounter("adr");
-      await repo.incrementCounter("task");
-      await repo.incrementCounter("task");
+    it("stores issues flat with milestoneId as a field", async () => {
+      const issue = Issue.create({
+        id: IssueId.from("ISSUE-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        milestoneId: MilestoneId.from("MILE-0001"),
+        title: "Build it",
+        author: "carol",
+      });
+      await repo.saveIssue(issue);
+      const issuesDir = path.join(tempDir, ROADKIT_DIR, "projects", "PROJ-0001-one", "issues");
+      const files = await fs.readdir(issuesDir);
+      expect(files).toEqual(["ISSUE-0001-build-it.md"]);
+      const found = await repo.findIssue(issue.id);
+      expect(found?.milestoneId?.toString()).toBe("MILE-0001");
+    });
+
+    it("findIssue scans all projects when no hint is given", async () => {
+      await repo.saveIssue(
+        Issue.create({
+          id: IssueId.from("ISSUE-0005"),
+          projectId: ProjectId.from("PROJ-0002"),
+          title: "In project two",
+          author: "carol",
+        })
+      );
+      const found = await repo.findIssue(IssueId.from("ISSUE-0005"));
+      expect(found?.projectId.toString()).toBe("PROJ-0002");
+    });
+
+    it("findIssuesForProject scopes to one project", async () => {
+      await repo.saveIssue(
+        Issue.create({
+          id: IssueId.from("ISSUE-0001"),
+          projectId: ProjectId.from("PROJ-0001"),
+          title: "A",
+          author: "carol",
+        })
+      );
+      await repo.saveIssue(
+        Issue.create({
+          id: IssueId.from("ISSUE-0002"),
+          projectId: ProjectId.from("PROJ-0002"),
+          title: "B",
+          author: "carol",
+        })
+      );
+      expect(await repo.findIssuesForProject(ProjectId.from("PROJ-0001"))).toHaveLength(1);
+      expect(await repo.findAllIssues()).toHaveLength(2);
+    });
+  });
+
+  describe("Spec CRUD", () => {
+    beforeEach(async () => {
+      await repo.saveProject(makeProject());
+    });
+
+    it("saves and finds a spec", async () => {
+      const spec = Spec.create({
+        id: SpecId.from("SPEC-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "A Decision",
+        author: "erin",
+      });
+      await repo.saveSpec(spec);
+      const found = await repo.findSpec(spec.id);
+      expect(found?.title).toBe("A Decision");
+      expect(await repo.findSpecsForProject(ProjectId.from("PROJ-0001"))).toHaveLength(1);
+      expect(await repo.findAllSpecs()).toHaveLength(1);
+    });
+  });
+
+  describe("State counters", () => {
+    it("starts at zero for all entities", async () => {
       const state = await repo.getState();
-      expect(state.counters.adr).toBe(1);
-      expect(state.counters.task).toBe(2);
-      expect(state.counters.trace).toBe(0);
+      expect(state.counters).toEqual({ project: 0, milestone: 0, issue: 0, spec: 0 });
+    });
+
+    it("increments counters independently", async () => {
+      expect(await repo.incrementCounter("project")).toBe(1);
+      expect(await repo.incrementCounter("project")).toBe(2);
+      expect(await repo.incrementCounter("issue")).toBe(1);
+      const state = await repo.getState();
+      expect(state.counters.project).toBe(2);
+      expect(state.counters.issue).toBe(1);
+      expect(state.counters.milestone).toBe(0);
     });
   });
 
-  describe("traces", () => {
-    it("appendTrace writes the file", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "ADR", author: "alice" });
-      await repo.saveADR(adr);
-      const trace = Trace.create({
-        id: TraceId.from("TRACE-0001"),
-        adrId,
+  describe("Traces", () => {
+    beforeEach(async () => {
+      await repo.saveProject(makeProject("PROJ-0001", "One"));
+      await repo.saveProject(makeProject("PROJ-0002", "Two"));
+    });
+
+    function trace(overrides: Partial<Parameters<typeof Trace.create>[0]> = {}): Trace {
+      return Trace.create({
+        id: TraceId.generate(),
+        projectId: ProjectId.from("PROJ-0001"),
         actor: "alice",
         actorType: "human",
-        event: "adr_created",
+        event: "note",
+        ...overrides,
       });
-      await repo.appendTrace(trace);
-      const tracePath = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces", "TRACE-0001.md");
-      const exists = await fs
-        .access(tracePath)
-        .then(() => true)
-        .catch(() => false);
-      expect(exists).toBe(true);
+    }
+
+    it("two distinct traces never collide on disk", async () => {
+      const a = trace();
+      const b = trace();
+      expect(a.id.toString()).not.toBe(b.id.toString());
+      await repo.appendTrace(a);
+      await repo.appendTrace(b);
+      const tracesDir = path.join(tempDir, ROADKIT_DIR, "projects", "PROJ-0001-one", "traces");
+      const files = await fs.readdir(tracesDir);
+      expect(files).toHaveLength(2);
     });
 
-    it("findTraces returns empty when no ADRs exist", async () => {
-      const traces = await repo.findTraces({});
-      expect(traces).toEqual([]);
+    it("filters by projectId", async () => {
+      await repo.appendTrace(trace({ projectId: ProjectId.from("PROJ-0001") }));
+      await repo.appendTrace(trace({ projectId: ProjectId.from("PROJ-0002") }));
+      const found = await repo.findTraces({ projectId: ProjectId.from("PROJ-0001") });
+      expect(found).toHaveLength(1);
+      expect(found[0]?.projectId.toString()).toBe("PROJ-0001");
     });
 
-    it("findTraces returns all traces across all ADRs", async () => {
-      const adr1 = ADR.create({ id: ADRId.from("ADR-0001"), title: "A1", author: "alice" });
-      const adr2 = ADR.create({ id: ADRId.from("ADR-0002"), title: "A2", author: "bob" });
-      await repo.saveADR(adr1);
-      await repo.saveADR(adr2);
-
+    it("filters by issueId", async () => {
       await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId: adr1.id,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
+        trace({ issueId: IssueId.from("ISSUE-0001"), event: "issue_started" })
       );
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId: adr2.id,
-          actor: "bob",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-
-      const traces = await repo.findTraces({});
-      expect(traces).toHaveLength(2);
+      await repo.appendTrace(trace({ issueId: IssueId.from("ISSUE-0002") }));
+      const found = await repo.findTraces({ issueId: IssueId.from("ISSUE-0001") });
+      expect(found).toHaveLength(1);
+      expect(found[0]?.event).toBe("issue_started");
     });
 
-    it("findTraces scoped to an ADR only returns that ADR's traces", async () => {
-      const adr1 = ADR.create({ id: ADRId.from("ADR-0001"), title: "A1", author: "alice" });
-      const adr2 = ADR.create({ id: ADRId.from("ADR-0002"), title: "A2", author: "bob" });
-      await repo.saveADR(adr1);
-      await repo.saveADR(adr2);
-
+    it("filters by specId", async () => {
       await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId: adr1.id,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
+        trace({ specId: SpecId.from("SPEC-0001"), event: "spec_status_changed" })
       );
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId: adr2.id,
-          actor: "bob",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-
-      const traces = await repo.findTraces({ adrId: adr1.id });
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.adrId.toString()).toBe("ADR-0001");
+      await repo.appendTrace(trace({ specId: SpecId.from("SPEC-0002") }));
+      const found = await repo.findTraces({ specId: SpecId.from("SPEC-0001") });
+      expect(found).toHaveLength(1);
+      expect(found[0]?.specId?.toString()).toBe("SPEC-0001");
     });
 
-    it("findTraces filters by actor", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      await repo.saveADR(adr);
-
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId,
-          actor: "bot",
-          actorType: "agent",
-          event: "task_created",
-        })
-      );
-
-      const traces = await repo.findTraces({ actor: "alice" });
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.actor).toBe("alice");
+    it("filters by actor and event", async () => {
+      await repo.appendTrace(trace({ actor: "bob", event: "issue_completed" }));
+      await repo.appendTrace(trace({ actor: "alice", event: "note" }));
+      expect(await repo.findTraces({ actor: "bob" })).toHaveLength(1);
+      expect(await repo.findTraces({ event: "issue_completed" })).toHaveLength(1);
     });
 
-    it("findTraces filters by event", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      await repo.saveADR(adr);
-
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "task_completed",
-        })
-      );
-
-      const traces = await repo.findTraces({ event: "task_completed" });
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.event).toBe("task_completed");
+    it("returns all traces across projects with no filter", async () => {
+      await repo.appendTrace(trace({ projectId: ProjectId.from("PROJ-0001") }));
+      await repo.appendTrace(trace({ projectId: ProjectId.from("PROJ-0002") }));
+      expect(await repo.findTraces({})).toHaveLength(2);
     });
+  });
 
-    it("findTraces filters by taskId", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      const taskId = TaskId.from("TASK-0001");
-      await repo.saveADR(adr);
+  describe("best-effort git staging", () => {
+    it("persists writes even when the git adapter throws", async () => {
+      let stageCalls = 0;
+      const failingGit = {
+        stage: async () => {
+          stageCalls++;
+          throw new Error("git boom");
+        },
+        isRepo: async () => true,
+      };
+      const gitRepo = new FsRealmRepository(tempDir, failingGit);
 
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId,
-          taskId,
-          actor: "alice",
-          actorType: "human",
-          event: "task_completed",
-        })
-      );
-
-      const traces = await repo.findTraces({ taskId });
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.taskId?.toString()).toBe("TASK-0001");
-    });
-
-    it("findTraces filters by since", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      await repo.saveADR(adr);
-
-      const past = Trace.create({
-        id: TraceId.from("TRACE-0001"),
-        adrId,
+      // A staging failure must NOT abort the mutation or lose the trace.
+      await gitRepo.saveProject(makeProject("PROJ-0001", "One"));
+      const t = Trace.create({
+        id: TraceId.generate(),
+        projectId: ProjectId.from("PROJ-0001"),
         actor: "alice",
         actorType: "human",
-        event: "adr_created",
+        event: "project_created",
       });
-      // Manually set an older timestamp by writing the file directly
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
-      await fs.mkdir(tracesDir, { recursive: true });
-      const oldContent = `---\nid: TRACE-0001\nadrId: ADR-0001\ntaskId: null\nat: '2020-01-01T00:00:00.000Z'\nactor: alice\nactorType: human\nevent: adr_created\nref: null\nfrom: null\nto: null\n---\n`;
-      await fs.writeFile(path.join(tracesDir, "TRACE-0001.md"), oldContent, "utf-8");
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "task_created",
-        })
-      );
+      await gitRepo.appendTrace(t);
 
-      const since = new Date("2023-01-01");
-      const traces = await repo.findTraces({ since });
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.id.toString()).toBe("TRACE-0002");
-    });
-
-    it("findTraces skips non-.md files in traces dir", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      await repo.saveADR(adr);
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0001"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "adr_created",
-        })
-      );
-      // Write a non-.md file in traces dir
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
-      await fs.writeFile(path.join(tracesDir, ".DS_Store"), "junk", "utf-8");
-
-      const traces = await repo.findTraces({});
-      expect(traces).toHaveLength(1);
-    });
-
-    it("findTraces skips malformed trace files", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      await repo.saveADR(adr);
-
-      const tracesDir = path.join(tempDir, ".adrkit", "log", "ADR-0001", "traces");
-      await fs.mkdir(tracesDir, { recursive: true });
-      await fs.writeFile(path.join(tracesDir, "TRACE-0001.md"), "---\nid: BAD_ID\n---\n", "utf-8");
-      await repo.appendTrace(
-        Trace.create({
-          id: TraceId.from("TRACE-0002"),
-          adrId,
-          actor: "alice",
-          actorType: "human",
-          event: "task_created",
-        })
-      );
-
-      const traces = await repo.findTraces({});
-      expect(traces).toHaveLength(1);
-      expect(traces[0]?.id.toString()).toBe("TRACE-0002");
-    });
-
-    it("findTraces returns empty when adrId filter matches no ADR", async () => {
-      const traces = await repo.findTraces({ adrId: ADRId.from("ADR-0099") });
-      expect(traces).toEqual([]);
-    });
-
-    it("appendTrace and findTraces round-trip all fields", async () => {
-      const adrId = ADRId.from("ADR-0001");
-      const adr = ADR.create({ id: adrId, title: "A", author: "alice" });
-      const taskId = TaskId.from("TASK-0001");
-      await repo.saveADR(adr);
-
-      const original = Trace.create({
-        id: TraceId.from("TRACE-0001"),
-        adrId,
-        taskId,
-        actor: "agent-007",
-        actorType: "agent",
-        event: "task_completed",
-        ref: "sha-abc",
-        from: "in-progress",
-        to: "completed",
-        body: "Completed by agent",
-      });
-      await repo.appendTrace(original);
-
-      const [found] = await repo.findTraces({});
-      expect(found?.id.toString()).toBe("TRACE-0001");
-      expect(found?.taskId?.toString()).toBe("TASK-0001");
-      expect(found?.actor).toBe("agent-007");
-      expect(found?.actorType).toBe("agent");
-      expect(found?.event).toBe("task_completed");
-      expect(found?.ref).toBe("sha-abc");
-      expect(found?.from).toBe("in-progress");
-      expect(found?.to).toBe("completed");
-      expect(found?.body).toBe("Completed by agent");
+      expect(stageCalls).toBeGreaterThan(0);
+      expect(await gitRepo.findProject(ProjectId.from("PROJ-0001"))).not.toBeNull();
+      expect(await gitRepo.findTraces({})).toHaveLength(1);
     });
   });
 });

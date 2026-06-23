@@ -16,7 +16,7 @@ Closes #<!-- issue number -->
 - [ ] Tests pass (`bun test`)
 - [ ] Type check passes (`bun run typecheck`)
 - [ ] Lint passes (`bun run lint`)
-- [ ] No regressions in `adrkit context` or `adrkit next` output
+- [ ] No regressions in `rkit context` or `rkit next` output
 
 ## Review notes
 

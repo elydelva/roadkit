@@ -1,10 +1,10 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { CounterKey, RealmState } from "@adrkit/core";
-import { ADRKIT_DIR, STATE_FILE } from "../constants.js";
+import type { CounterKey, RealmState } from "@roadkit/core";
+import { ROADKIT_DIR, STATE_FILE } from "../constants.js";
 
 function stateFilePath(realmRoot: string): string {
-  return path.join(realmRoot, ADRKIT_DIR, STATE_FILE);
+  return path.join(realmRoot, ROADKIT_DIR, STATE_FILE);
 }
 
 async function readStateRaw(realmRoot: string): Promise<Record<string, number>> {
@@ -30,9 +30,10 @@ export async function getState(realmRoot: string): Promise<RealmState> {
   const raw = await readStateRaw(realmRoot);
   return {
     counters: {
-      adr: raw.adr ?? 0,
-      task: raw.task ?? 0,
-      trace: raw.trace ?? 0,
+      project: raw.project ?? 0,
+      milestone: raw.milestone ?? 0,
+      issue: raw.issue ?? 0,
+      spec: raw.spec ?? 0,
     },
   };
 }

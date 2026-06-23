@@ -6,23 +6,37 @@ export class InvalidTransitionError extends Error {
 }
 
 export class GatesNotClearedError extends Error {
-  constructor(taskId: string) {
-    super(`Gates not cleared for task "${taskId}"`);
+  constructor(issueId: string) {
+    super(`Gates not cleared for issue "${issueId}"`);
     this.name = "GatesNotClearedError";
   }
 }
 
-export class ADRNotFoundError extends Error {
+export class ProjectNotFoundError extends Error {
   constructor(id: string) {
-    super(`ADR not found: "${id}"`);
-    this.name = "ADRNotFoundError";
+    super(`Project not found: "${id}"`);
+    this.name = "ProjectNotFoundError";
   }
 }
 
-export class TaskNotFoundError extends Error {
+export class MilestoneNotFoundError extends Error {
   constructor(id: string) {
-    super(`Task not found: "${id}"`);
-    this.name = "TaskNotFoundError";
+    super(`Milestone not found: "${id}"`);
+    this.name = "MilestoneNotFoundError";
+  }
+}
+
+export class IssueNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Issue not found: "${id}"`);
+    this.name = "IssueNotFoundError";
+  }
+}
+
+export class SpecNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Spec not found: "${id}"`);
+    this.name = "SpecNotFoundError";
   }
 }
 

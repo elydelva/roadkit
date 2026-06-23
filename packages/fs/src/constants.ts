@@ -1,8 +1,10 @@
-export const ADRKIT_DIR = ".adrkit";
-export const LOG_DIR = "log";
-export const STATE_FILE = ".ardstate";
-export const CONFIG_FILE = ".adrconfig";
-export const TEMPLATES_DIR = "templates";
-export const TASKS_DIR = "tasks";
+export const ROADKIT_DIR = ".roadkit";
+export const STATE_FILE = ".state";
+export const CONFIG_FILE = "config.yml";
+export const PROJECTS_DIR = "projects";
+export const SPECS_DIR = "specs";
+export const MILESTONES_DIR = "milestones";
+export const ISSUES_DIR = "issues";
 export const TRACES_DIR = "traces";
+export const TEMPLATES_DIR = "templates";
 export const MD_EXT = ".md";

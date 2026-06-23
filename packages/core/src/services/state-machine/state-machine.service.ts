@@ -1,18 +1,12 @@
 import { InvalidTransitionError } from "../../errors/errors.js";
-import type { ADRStatus, TaskStatus } from "../../value-objects/status/status.js";
+import type {
+  IssueStatus,
+  MilestoneStatus,
+  ProjectStatus,
+  SpecStatus,
+} from "../../value-objects/status/status.js";
 
-const ADR_TRANSITIONS: Record<ADRStatus, ADRStatus[]> = {
-  draft: ["proposed", "abandoned"],
-  proposed: ["accepted", "abandoned", "draft"],
-  accepted: ["in-progress", "deferred", "abandoned"],
-  "in-progress": ["completed", "abandoned", "deferred"],
-  completed: ["superseded"],
-  abandoned: [],
-  superseded: [],
-  deferred: ["accepted", "abandoned"],
-};
-
-const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+const ISSUE_TRANSITIONS: Record<IssueStatus, IssueStatus[]> = {
   "not-started": ["in-progress", "skipped", "abandoned"],
   "in-progress": ["completed", "abandoned", "blocked"],
   blocked: ["in-progress", "abandoned"],
@@ -21,23 +15,66 @@ const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   abandoned: [],
 };
 
+const SPEC_TRANSITIONS: Record<SpecStatus, SpecStatus[]> = {
+  draft: ["proposed", "abandoned"],
+  proposed: ["accepted", "abandoned", "draft"],
+  accepted: ["superseded", "deferred"],
+  deferred: ["accepted", "abandoned"],
+  superseded: [],
+  abandoned: [],
+};
+
+const PROJECT_TRANSITIONS: Record<ProjectStatus, ProjectStatus[]> = {
+  planned: ["active", "cancelled"],
+  active: ["paused", "completed", "cancelled"],
+  paused: ["active", "cancelled"],
+  completed: [],
+  cancelled: [],
+};
+
+const MILESTONE_TRANSITIONS: Record<MilestoneStatus, MilestoneStatus[]> = {
+  pending: ["active"],
+  active: ["done", "pending"],
+  done: ["active"],
+};
+
 export class StateMachineService {
-  isValidADRTransition(from: ADRStatus, to: ADRStatus): boolean {
-    return ADR_TRANSITIONS[from].includes(to);
+  isValidIssueTransition(from: IssueStatus, to: IssueStatus): boolean {
+    return ISSUE_TRANSITIONS[from].includes(to);
   }
 
-  isValidTaskTransition(from: TaskStatus, to: TaskStatus): boolean {
-    return TASK_TRANSITIONS[from].includes(to);
+  isValidSpecTransition(from: SpecStatus, to: SpecStatus): boolean {
+    return SPEC_TRANSITIONS[from].includes(to);
   }
 
-  validateADRTransition(from: ADRStatus, to: ADRStatus): void {
-    if (!this.isValidADRTransition(from, to)) {
+  isValidProjectTransition(from: ProjectStatus, to: ProjectStatus): boolean {
+    return PROJECT_TRANSITIONS[from].includes(to);
+  }
+
+  isValidMilestoneTransition(from: MilestoneStatus, to: MilestoneStatus): boolean {
+    return MILESTONE_TRANSITIONS[from].includes(to);
+  }
+
+  validateIssueTransition(from: IssueStatus, to: IssueStatus): void {
+    if (!this.isValidIssueTransition(from, to)) {
       throw new InvalidTransitionError(from, to);
     }
   }
 
-  validateTaskTransition(from: TaskStatus, to: TaskStatus): void {
-    if (!this.isValidTaskTransition(from, to)) {
+  validateSpecTransition(from: SpecStatus, to: SpecStatus): void {
+    if (!this.isValidSpecTransition(from, to)) {
+      throw new InvalidTransitionError(from, to);
+    }
+  }
+
+  validateProjectTransition(from: ProjectStatus, to: ProjectStatus): void {
+    if (!this.isValidProjectTransition(from, to)) {
+      throw new InvalidTransitionError(from, to);
+    }
+  }
+
+  validateMilestoneTransition(from: MilestoneStatus, to: MilestoneStatus): void {
+    if (!this.isValidMilestoneTransition(from, to)) {
       throw new InvalidTransitionError(from, to);
     }
   }

@@ -1,14 +1,15 @@
 {
-  "name": "@adrkit/sync",
+  "name": "@roadkit/sync",
   "version": "0.0.0",
   "private": true,
-  "description": "ADRKit sync adapters — Linear, GitHub",
+  "description": "roadkit sync adapters \u2014 Linear, GitHub",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
@@ -20,9 +21,9 @@
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@adrkit/core": "workspace:*",
-    "@adrkit/fs": "workspace:*",
-    "@adrkit/git": "workspace:*"
+    "@roadkit/core": "workspace:*",
+    "@roadkit/fs": "workspace:*",
+    "@roadkit/git": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:"

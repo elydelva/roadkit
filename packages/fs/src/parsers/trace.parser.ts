@@ -1,15 +1,19 @@
-import type { Trace, TraceEvent } from "@adrkit/core";
-import { ADRId, TaskId, TraceId } from "@adrkit/core";
+import type { Trace, TraceEvent } from "@roadkit/core";
+import { IssueId, ProjectId, SpecId, TraceId } from "@roadkit/core";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
 function toTraceEvent(val: unknown): TraceEvent {
   const valid: TraceEvent[] = [
-    "adr_created",
-    "adr_status_changed",
-    "task_created",
-    "task_started",
-    "task_completed",
-    "task_abandoned",
+    "project_created",
+    "milestone_created",
+    "issue_created",
+    "issue_started",
+    "issue_completed",
+    "issue_abandoned",
+    "spec_created",
+    "spec_status_changed",
+    "project_status_changed",
+    "milestone_status_changed",
     "rules_acknowledged",
     "note",
     "synced",
@@ -39,31 +43,32 @@ function toStringOrNull(val: unknown): string | null {
   return null;
 }
 
-function toTaskIdOrNull(val: unknown): TaskId | null {
+function toIssueIdOrNull(val: unknown): IssueId | null {
   if (typeof val !== "string" || val.length === 0) return null;
   try {
-    return TaskId.from(val);
+    return IssueId.from(val);
   } catch {
     return null;
   }
 }
 
-export function parseTrace(content: string, adrId: ADRId): Trace {
+function toSpecIdOrNull(val: unknown): SpecId | null {
+  if (typeof val !== "string" || val.length === 0) return null;
+  try {
+    return SpecId.from(val);
+  } catch {
+    return null;
+  }
+}
+
+export function parseTrace(content: string): Trace {
   const { data, body } = parseFrontmatter(content);
 
-  const id = TraceId.from(String(data.id ?? ""));
-  const parsedAdrId = (() => {
-    try {
-      return ADRId.from(String(data.adrId ?? ""));
-    } catch {
-      return adrId;
-    }
-  })();
-
   return {
-    id,
-    adrId: parsedAdrId,
-    taskId: toTaskIdOrNull(data.taskId),
+    id: TraceId.from(String(data.id ?? "")),
+    projectId: ProjectId.from(String(data.projectId ?? "")),
+    issueId: toIssueIdOrNull(data.issueId),
+    specId: toSpecIdOrNull(data.specId),
     at: toDate(data.at),
     actor: typeof data.actor === "string" ? data.actor : "unknown",
     actorType: toActorType(data.actorType),
