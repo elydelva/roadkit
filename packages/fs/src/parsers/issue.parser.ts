@@ -1,4 +1,4 @@
-import type { Issue, IssueStatus, Priority, Rule } from "@roadkit/core";
+import type { Issue, IssueStatus, Rule } from "@roadkit/core";
 import { IssueId, MilestoneId, ProjectId } from "@roadkit/core";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
@@ -51,12 +51,8 @@ function toIssueStatus(val: unknown): IssueStatus {
   return "not-started";
 }
 
-function toPriority(val: unknown): Priority {
-  const valid: Priority[] = ["urgent", "high", "medium", "low", "none"];
-  if (typeof val === "string" && valid.includes(val as Priority)) {
-    return val as Priority;
-  }
-  return "none";
+function toPriority(val: unknown): string {
+  return typeof val === "string" && val.length > 0 ? val : "none";
 }
 
 function toNumberOrNull(val: unknown): number | null {
