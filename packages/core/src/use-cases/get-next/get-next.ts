@@ -1,7 +1,7 @@
+import { DEFAULT_CONFIG, type RealmConfig, priorityRank } from "../../config/index.js";
 import type { Issue, Milestone, Project } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { DAGService } from "../../services/index.js";
-import type { Priority } from "../../value-objects/index.js";
 
 export interface NextResult {
   issue: Issue;
@@ -9,18 +9,16 @@ export interface NextResult {
   milestone: Milestone | null;
 }
 
-const PRIORITY_RANK: Record<Priority, number> = {
-  urgent: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-  none: 4,
-};
-
 export class GetNextUseCase {
   private readonly dagService = new DAGService();
+  private readonly rank: (p: string) => number;
 
-  constructor(private readonly repo: IRealmRepository) {}
+  constructor(
+    private readonly repo: IRealmRepository,
+    config: RealmConfig = DEFAULT_CONFIG
+  ) {
+    this.rank = priorityRank(config);
+  }
 
   async execute(): Promise<NextResult | null> {
     const [allIssues, allProjects, allMilestones] = await Promise.all([
@@ -40,7 +38,7 @@ export class GetNextUseCase {
 
     // Sort: priority rank ASC → milestone.order ASC (null milestone last) → issue createdAt ASC
     const sorted = eligible.slice().sort((a, b) => {
-      const prioCmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+      const prioCmp = this.rank(a.priority) - this.rank(b.priority);
       if (prioCmp !== 0) return prioCmp;
 
       const mA = milestoneFor(a);

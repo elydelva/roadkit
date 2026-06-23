@@ -1,6 +1,6 @@
 import { type ContextFilter, ProjectId } from "@roadkit/core";
 import type { Container } from "../container.js";
-import { serializeContext } from "./shared.js";
+import { formatEstimate, serializeContext } from "./shared.js";
 
 interface ContextOptions {
   project?: string;
@@ -36,7 +36,9 @@ export async function runContext(container: Container, opts: ContextOptions): Pr
 
     const issues = ctx.issues.filter((i) => i.projectId.equals(p.id));
     for (const i of issues) {
-      console.log(`  ${i.id.toString()}  ${i.title}  [${i.status}] (${i.priority})`);
+      const est = formatEstimate(container.config, i.estimate);
+      const tag = est ? `${i.priority} · ${est}` : i.priority;
+      console.log(`  ${i.id.toString()}  ${i.title}  [${i.status}] (${tag})`);
     }
 
     const specs = ctx.specs.filter((s) => s.projectId.equals(p.id));

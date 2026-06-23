@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+import type { RealmConfig } from "../../config/index.js";
+import { DEFAULT_CONFIG } from "../../config/index.js";
 import { Issue, Milestone, Project } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { IssueId, MilestoneId, ProjectId } from "../../value-objects/index.js";
@@ -65,5 +67,23 @@ describe("GetNextUseCase", () => {
     const result = await useCase.execute();
     expect(result?.issue.id.toString()).toBe("ISSUE-0002");
     expect(result?.milestone?.id.equals(milestoneId)).toBe(true);
+  });
+
+  it("orders by custom priority levels from config", async () => {
+    const config: RealmConfig = {
+      ...DEFAULT_CONFIG,
+      priority: { levels: ["P0", "P1", "P2", "P3"], default: "P2" },
+    };
+    const customUseCase = new GetNextUseCase(repo, config);
+    await repo.saveIssue({
+      ...Issue.create({ id: IssueId.generate(1), projectId, title: "low", author: "a" }),
+      priority: "P3",
+    });
+    await repo.saveIssue({
+      ...Issue.create({ id: IssueId.generate(2), projectId, title: "top", author: "a" }),
+      priority: "P0",
+    });
+    const result = await customUseCase.execute();
+    expect(result?.issue.id.toString()).toBe("ISSUE-0002");
   });
 });

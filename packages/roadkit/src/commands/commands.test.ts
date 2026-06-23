@@ -8,6 +8,7 @@ import {
   CreateMilestoneUseCase,
   CreateProjectUseCase,
   CreateSpecUseCase,
+  DEFAULT_CONFIG,
   GetContextUseCase,
   GetHistoryUseCase,
   GetNextUseCase,
@@ -39,6 +40,7 @@ function testContainer(realmRoot: string): Container {
   const repo = new FsRealmRepository(realmRoot);
   return {
     realmRoot,
+    config: DEFAULT_CONFIG,
     repo,
     createProject: new CreateProjectUseCase(repo),
     createMilestone: new CreateMilestoneUseCase(repo),

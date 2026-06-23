@@ -12,8 +12,7 @@ export {
 } from "./constants.js";
 export { FsRealmRepository } from "./realm.repository.js";
 export { slugify } from "./slug.js";
-export { readADRConfig, writeADRConfig } from "./config/adrconfig.reader.js";
-export type { ADRConfig } from "./config/adrconfig.reader.js";
+export { readRealmConfig, writeRealmConfig } from "./config/realm-config.reader.js";
 export { getState, incrementCounter } from "./config/state.manager.js";
 export { parseFrontmatter, stringifyFrontmatter } from "./parsers/frontmatter.parser.js";
 export { parseProject } from "./parsers/project.parser.js";

@@ -26,7 +26,9 @@ The domain is **project-rooted**: a `Project` owns `Milestone`s, `Issue`s and `S
 **Value objects** (`packages/core/src/value-objects/`):
 - IDs: `ProjectId` (PROJ-0001), `MilestoneId` (MILE-0001), `IssueId` (ISSUE-0001), `SpecId` (SPEC-0001), `TraceId` (TRACE-0001).
 - Statuses: `ProjectStatus` (planned · active · paused · completed · cancelled), `MilestoneStatus` (pending · active · done), `IssueStatus` (not-started · in-progress · completed · abandoned · blocked · skipped), `SpecStatus` (draft · proposed · accepted · superseded · deferred · abandoned).
-- `Priority` (urgent · high · medium · low · none) — on issues.
+- `Priority` (`string`) — on issues. Levels are **fully customizable** via `roadfig.yml` (`priority.levels`); the default set is urgent · high · medium · low · none.
+
+**Config** (`packages/core/src/config/`): `RealmConfig` — the extensible realm configuration read from `roadfig.yml`. Holds `estimation` (scale + default + optional `values` override), `priority` (custom `levels` + `default`), and a `labels` taxonomy. Pure helpers — `expandScale`, `resolveEstimate`, `formatEstimate`, `priorityRank`, `validatePriority` — live here with `DEFAULT_CONFIG`. All I/O stays in `@roadkit/fs` (`readRealmConfig` / `writeRealmConfig`).
 
 **Services** (`packages/core/src/services/`):
 - `StateMachineService` — enforces valid status transitions.
@@ -41,7 +43,7 @@ The domain is **project-rooted**: a `Project` owns `Milestone`s, `Issue`s and `S
 ## File layout on disk
 
 ```
-roadfig.yml                                                # project config at repo root (ID format, types, templates)
+roadfig.yml                                                # RealmConfig at repo root (estimation · priority · labels)
 .roadkit/.state                                            # persistent counters
 .roadkit/templates/                                        # entity templates
 .roadkit/projects/PROJ-XXXX-slug/specs/SPEC-XXXX.md        # spec (YAML frontmatter + Markdown body)
@@ -67,6 +69,8 @@ rkit history
 
 - **Gates** — issue dependency; Issue A gates on Issue B means B must complete first. Cross-project syntax: `PROJ-0001/ISSUE-0003`.
 - **Rules** — inline YAML frontmatter constraints (`before_edit`, `after_complete`, etc.) injected into agent system prompts.
-- **Milestones / Priority** — used by `rkit next` to prioritize work order.
+- **Milestones / Priority** — used by `rkit next` to prioritize work order. Priority ordering follows `priority.levels` in `roadfig.yml` (index 0 = highest).
+- **Estimation** — `roadfig.yml` `estimation.scale` (none · linear · fibonacci · tshirt · exponential · hours) drives `--estimate <label|number>` resolution; estimates are stored as points and displayed as scale labels (e.g. `M`).
+- **Labels** — shared taxonomy declared under `roadfig.yml` `labels`.
 - **Specs** — decision records attached to a project (the former ADR).
 - **Traces** — immutable audit log entries, one file per mutation.

@@ -8,6 +8,24 @@ export type {
   Priority,
 } from "./value-objects/index.js";
 
+// Config
+export {
+  DEFAULT_CONFIG,
+  expandScale,
+  resolveEstimate,
+  formatEstimate,
+  priorityRank,
+  validatePriority,
+} from "./config/index.js";
+export type {
+  RealmConfig,
+  EstimationConfig,
+  EstimationScale,
+  EstimatePoint,
+  PriorityConfig,
+  LabelConfig,
+} from "./config/index.js";
+
 // Entities
 export { Project, Milestone, Issue, Spec, Trace } from "./entities/index.js";
 export type {

@@ -1,5 +1,7 @@
 import type { Issue, Milestone, Project, RealmContext, Spec, Trace } from "@roadkit/core";
 
+export { formatEstimate } from "@roadkit/core";
+
 /** Resolve the acting author/actor from the environment. */
 export function resolveAuthor(): string {
   return process.env.GIT_AUTHOR_NAME ?? process.env.USER ?? "unknown";
