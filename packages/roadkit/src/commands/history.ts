@@ -1,6 +1,7 @@
 import type { HistoryFilter, Trace, TraceEvent } from "@roadkit/core";
 import { IssueId, ProjectId, SpecId } from "@roadkit/core";
 import type { Container } from "../container.js";
+import { getFormatter } from "./output.js";
 import { fail, serializeTrace } from "./shared.js";
 
 interface HistoryOptions {
@@ -40,17 +41,17 @@ export async function runHistory(container: Container, opts: HistoryOptions): Pr
 
   const traces = await container.getHistory.execute(filter);
 
-  if (opts.json) {
-    console.log(JSON.stringify(traces.map(serializeTrace), null, 2));
-    return;
-  }
+  getFormatter(opts.json ?? false).emit({
+    json: traces.map(serializeTrace),
+    human: () => {
+      if (traces.length === 0) {
+        console.log("No history found.");
+        return;
+      }
 
-  if (traces.length === 0) {
-    console.log("No history found.");
-    return;
-  }
-
-  for (const trace of traces) {
-    console.log(formatTrace(trace));
-  }
+      for (const trace of traces) {
+        console.log(formatTrace(trace));
+      }
+    },
+  });
 }
