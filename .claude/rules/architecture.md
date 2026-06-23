@@ -41,7 +41,7 @@ The domain is **project-rooted**: a `Project` owns `Milestone`s, `Issue`s and `S
 ## File layout on disk
 
 ```
-.roadkit/config.yml                                        # project config (ID format, types, templates)
+roadfig.yml                                                # project config at repo root (ID format, types, templates)
 .roadkit/.state                                            # persistent counters
 .roadkit/templates/                                        # entity templates
 .roadkit/projects/PROJ-XXXX-slug/specs/SPEC-XXXX.md        # spec (YAML frontmatter + Markdown body)

@@ -1,6 +1,6 @@
 export const ROADKIT_DIR = ".roadkit";
 export const STATE_FILE = ".state";
-export const CONFIG_FILE = "config.yml";
+export const CONFIG_FILE = "roadfig.yml";
 export const PROJECTS_DIR = "projects";
 export const SPECS_DIR = "specs";
 export const MILESTONES_DIR = "milestones";
