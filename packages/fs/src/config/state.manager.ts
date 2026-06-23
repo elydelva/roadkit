@@ -30,9 +30,10 @@ export async function getState(realmRoot: string): Promise<RealmState> {
   const raw = await readStateRaw(realmRoot);
   return {
     counters: {
-      adr: raw.adr ?? 0,
-      task: raw.task ?? 0,
-      trace: raw.trace ?? 0,
+      project: raw.project ?? 0,
+      milestone: raw.milestone ?? 0,
+      issue: raw.issue ?? 0,
+      spec: raw.spec ?? 0,
     },
   };
 }
