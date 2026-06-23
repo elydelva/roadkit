@@ -151,6 +151,34 @@ rkit init
 
 ---
 
+## Configuration — `roadfig.yml`
+
+`rkit init` writes a `roadfig.yml` at the repo root. It drives estimation, priority, and labels:
+
+```yaml
+version: 1
+estimation:
+  scale: fibonacci      # none | linear | fibonacci | tshirt | exponential | hours
+  default: null         # default points, or null
+  # values: [...]       # optional override of the built-in scale
+priority:
+  levels: [urgent, high, medium, low, none]   # order = rank (index 0 = highest)
+  default: none
+labels:
+  - { name: bug, color: red }
+  - { name: feature, color: blue, group: kind }
+```
+
+- **Estimation** — `--estimate <label|number>` accepts a scale label (`M`) or a number (`3`); the value is stored as points and shown as its label. The `hours` scale accepts any non-negative real; `none` disables estimation.
+- **Priority** — define your own `levels` (e.g. `[P0, P1, P2, P3]`). `rkit next` orders by level index; `--priority` must be one of the configured levels, and the configured `default` applies when omitted.
+- **Labels** — a shared taxonomy you can attach to issues.
+
+```bash
+rkit issue add --project PROJ-0001 --title "Fix auth" --priority high --estimate M
+```
+
+---
+
 ## The spec
 
 roadkit is fully documented in the [Founding Paper](./docs/founding-paper.md). Every design decision is recorded there.
