@@ -40,6 +40,18 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
     }
   }
 
+  const labels = parseList(opts.labels);
+  const taxonomy = container.config.labels;
+  if (taxonomy.length > 0) {
+    const allowed = new Set(taxonomy.map((l) => l.name));
+    const unknown = labels.filter((l) => !allowed.has(l));
+    if (unknown.length > 0) {
+      fail(
+        `Invalid --labels: ${unknown.join(", ")} (allowed: ${taxonomy.map((l) => l.name).join(", ")})`
+      );
+    }
+  }
+
   const author = resolveAuthor();
   const issue = await container.createIssue.execute({
     projectId: ProjectId.from(opts.project),
@@ -48,7 +60,7 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
     priority,
     ...(opts.milestone ? { milestoneId: MilestoneId.from(opts.milestone) } : {}),
     ...(estimate !== undefined ? { estimate } : {}),
-    labels: parseList(opts.labels),
+    labels,
     ...(opts.parent ? { parentId: IssueId.from(opts.parent) } : {}),
     gates: parseList(opts.gates),
     ...(opts.assignee ? { assignee: opts.assignee } : {}),

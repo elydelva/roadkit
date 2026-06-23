@@ -152,4 +152,47 @@ describe("runIssueAdd", () => {
     const errors = await withFailStub(() => runIssueAdd(container, { project: "PROJ-0001" }));
     expect(errors.join("\n")).toContain("--title is required");
   });
+
+  it("accepts labels that are in a non-empty taxonomy", async () => {
+    const config: RealmConfig = {
+      ...DEFAULT_CONFIG,
+      labels: [{ name: "bug" }, { name: "feature" }],
+    };
+    const container = makeContainer(tempDir, config);
+    await seedProject(container);
+
+    const restore = silenceLog();
+    await runIssueAdd(container, { project: "PROJ-0001", title: "A", labels: "bug,feature" });
+    restore();
+
+    const issues = await container.repo.findIssuesForProject(ProjectId.from("PROJ-0001"));
+    expect(issues[0]?.labels).toEqual(["bug", "feature"]);
+  });
+
+  it("fails when a label is not in a non-empty taxonomy", async () => {
+    const config: RealmConfig = {
+      ...DEFAULT_CONFIG,
+      labels: [{ name: "bug" }],
+    };
+    const container = makeContainer(tempDir, config);
+    await seedProject(container);
+
+    const errors = await withFailStub(() =>
+      runIssueAdd(container, { project: "PROJ-0001", title: "A", labels: "bug,wip" })
+    );
+    expect(errors.join("\n")).toContain("Invalid --labels: wip");
+    expect(errors.join("\n")).toContain("allowed: bug");
+  });
+
+  it("allows free-form labels when the taxonomy is empty", async () => {
+    const container = makeContainer(tempDir, DEFAULT_CONFIG); // labels: []
+    await seedProject(container);
+
+    const restore = silenceLog();
+    await runIssueAdd(container, { project: "PROJ-0001", title: "A", labels: "anything,goes" });
+    restore();
+
+    const issues = await container.repo.findIssuesForProject(ProjectId.from("PROJ-0001"));
+    expect(issues[0]?.labels).toEqual(["anything", "goes"]);
+  });
 });
