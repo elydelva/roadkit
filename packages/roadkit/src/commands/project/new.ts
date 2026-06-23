@@ -1,5 +1,6 @@
 import type { Container } from "../../container.js";
-import { fail, parseList, resolveAuthor } from "../shared.js";
+import { parseList, resolveAuthor } from "../shared.js";
+import { requireOption } from "../validators.js";
 
 interface ProjectNewOptions {
   title?: string;
@@ -8,13 +9,11 @@ interface ProjectNewOptions {
 }
 
 export async function runProjectNew(container: Container, opts: ProjectNewOptions): Promise<void> {
-  if (!opts.title) {
-    fail("--title is required");
-  }
+  const title = requireOption(opts.title, "--title");
 
   const author = resolveAuthor();
   const project = await container.createProject.execute({
-    title: opts.title,
+    title,
     author,
     leads: parseList(opts.leads),
     body: opts.body ?? "",

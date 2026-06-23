@@ -1,6 +1,6 @@
-import { ProjectId } from "@roadkit/core";
 import type { Container } from "../../container.js";
-import { fail, parseList, resolveAuthor } from "../shared.js";
+import { parseList, resolveAuthor } from "../shared.js";
+import { parseProjectId, requireOption } from "../validators.js";
 
 interface SpecNewOptions {
   project?: string;
@@ -10,13 +10,13 @@ interface SpecNewOptions {
 }
 
 export async function runSpecNew(container: Container, opts: SpecNewOptions): Promise<void> {
-  if (!opts.project) fail("--project is required");
-  if (!opts.title) fail("--title is required");
+  const projectId = parseProjectId(opts.project);
+  const title = requireOption(opts.title, "--title");
 
   const author = resolveAuthor();
   const spec = await container.createSpec.execute({
-    projectId: ProjectId.from(opts.project),
-    title: opts.title,
+    projectId,
+    title,
     author,
     tags: parseList(opts.tags),
     body: opts.body ?? "",

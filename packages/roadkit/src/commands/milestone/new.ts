@@ -1,6 +1,6 @@
-import { ProjectId } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { fail, resolveAuthor } from "../shared.js";
+import { parseProjectId, requireOption } from "../validators.js";
 
 interface MilestoneNewOptions {
   project?: string;
@@ -14,12 +14,12 @@ export async function runMilestoneNew(
   container: Container,
   opts: MilestoneNewOptions
 ): Promise<void> {
-  if (!opts.project) fail("--project is required");
-  if (!opts.title) fail("--title is required");
-  if (opts.order === undefined) fail("--order is required");
+  const projectId = parseProjectId(opts.project);
+  const title = requireOption(opts.title, "--title");
+  const orderRaw = requireOption(opts.order, "--order");
 
-  const order = Number.parseInt(opts.order, 10);
-  if (Number.isNaN(order)) fail(`Invalid --order: ${opts.order}`);
+  const order = Number.parseInt(orderRaw, 10);
+  if (Number.isNaN(order)) fail(`Invalid --order: ${orderRaw}`);
 
   let targetDate: Date | undefined;
   if (opts.targetDate) {
@@ -30,8 +30,8 @@ export async function runMilestoneNew(
 
   const author = resolveAuthor();
   const milestone = await container.createMilestone.execute({
-    projectId: ProjectId.from(opts.project),
-    title: opts.title,
+    projectId,
+    title,
     order,
     author,
     ...(targetDate ? { targetDate } : {}),
