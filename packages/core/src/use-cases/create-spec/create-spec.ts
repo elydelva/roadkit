@@ -1,15 +1,17 @@
-import { Spec, Trace } from "../../entities/index.js";
+import { Spec } from "../../entities/index.js";
 import type { CreateSpecParams } from "../../entities/index.js";
 import { ProjectNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
-import { SpecId, TraceId } from "../../value-objects/index.js";
+import { SpecId } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 type CreateSpecInput = Omit<CreateSpecParams, "id"> & {
   actor?: string;
   actorType?: "human" | "agent";
 };
 
-export class CreateSpecUseCase {
+export class CreateSpecUseCase implements UseCase<CreateSpecInput, Spec> {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateSpecInput): Promise<Spec> {
@@ -24,15 +26,13 @@ export class CreateSpecUseCase {
     const spec = Spec.create({ ...input, id });
     await this.repo.saveSpec(spec);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: input.projectId,
       specId: id,
       actor: input.actor ?? input.author,
       actorType: input.actorType ?? "human",
       event: "spec_created",
     });
-    await this.repo.appendTrace(trace);
 
     return spec;
   }

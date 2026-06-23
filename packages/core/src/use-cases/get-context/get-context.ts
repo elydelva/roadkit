@@ -1,6 +1,7 @@
 import type { Issue, Milestone, Project, Spec, Trace } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import type { ProjectId } from "../../value-objects/index.js";
+import type { UseCase } from "../use-case.js";
 
 export interface ContextFilter {
   projectId?: ProjectId;
@@ -15,7 +16,7 @@ export interface RealmContext {
   traces: Trace[];
 }
 
-export class GetContextUseCase {
+export class GetContextUseCase implements UseCase<ContextFilter, RealmContext> {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(filter: ContextFilter = {}): Promise<RealmContext> {

@@ -1,10 +1,10 @@
-import { Trace } from "../../entities/index.js";
 import type { Spec } from "../../entities/index.js";
 import { SpecNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { StateMachineService } from "../../services/index.js";
-import { TraceId } from "../../value-objects/index.js";
 import type { SpecId, SpecStatus } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 interface SetSpecStatusInput {
   id: SpecId;
@@ -13,7 +13,7 @@ interface SetSpecStatusInput {
   actorType?: "human" | "agent";
 }
 
-export class SetSpecStatusUseCase {
+export class SetSpecStatusUseCase implements UseCase<SetSpecStatusInput, Spec> {
   private readonly stateMachine = new StateMachineService();
 
   constructor(private readonly repo: IRealmRepository) {}
@@ -34,8 +34,7 @@ export class SetSpecStatusUseCase {
     };
     await this.repo.saveSpec(updated);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: spec.projectId,
       specId: spec.id,
       actor: input.actor,
@@ -44,7 +43,6 @@ export class SetSpecStatusUseCase {
       from: spec.status,
       to: input.to,
     });
-    await this.repo.appendTrace(trace);
 
     return updated;
   }

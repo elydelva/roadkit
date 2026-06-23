@@ -1,10 +1,10 @@
-import { Trace } from "../../entities/index.js";
 import type { Issue } from "../../entities/index.js";
 import { GatesNotClearedError, IssueNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { DAGService, StateMachineService } from "../../services/index.js";
-import { TraceId } from "../../value-objects/index.js";
 import type { IssueId } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 interface CompleteIssueInput {
   id: IssueId;
@@ -12,7 +12,7 @@ interface CompleteIssueInput {
   actorType?: "human" | "agent";
 }
 
-export class CompleteIssueUseCase {
+export class CompleteIssueUseCase implements UseCase<CompleteIssueInput, Issue> {
   private readonly stateMachine = new StateMachineService();
   private readonly dagService = new DAGService();
 
@@ -40,8 +40,7 @@ export class CompleteIssueUseCase {
     };
     await this.repo.saveIssue(updated);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: issue.projectId,
       issueId: issue.id,
       actor: input.actor,
@@ -50,7 +49,6 @@ export class CompleteIssueUseCase {
       from: issue.status,
       to: "completed",
     });
-    await this.repo.appendTrace(trace);
 
     return updated;
   }

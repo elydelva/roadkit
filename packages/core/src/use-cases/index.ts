@@ -13,3 +13,6 @@ export { GetContextUseCase } from "./get-context/get-context.js";
 export type { ContextFilter, RealmContext } from "./get-context/get-context.js";
 export { GetHistoryUseCase } from "./get-history/get-history.js";
 export type { HistoryFilter } from "./get-history/get-history.js";
+export type { UseCase } from "./use-case.js";
+export { recordTrace } from "./record-trace.js";
+export type { RecordTraceParams } from "./record-trace.js";

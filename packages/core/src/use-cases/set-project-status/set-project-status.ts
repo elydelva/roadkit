@@ -1,10 +1,10 @@
-import { Trace } from "../../entities/index.js";
 import type { Project } from "../../entities/index.js";
 import { ProjectNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { StateMachineService } from "../../services/index.js";
-import { TraceId } from "../../value-objects/index.js";
 import type { ProjectId, ProjectStatus } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 interface SetProjectStatusInput {
   id: ProjectId;
@@ -13,7 +13,7 @@ interface SetProjectStatusInput {
   actorType?: "human" | "agent";
 }
 
-export class SetProjectStatusUseCase {
+export class SetProjectStatusUseCase implements UseCase<SetProjectStatusInput, Project> {
   private readonly stateMachine = new StateMachineService();
 
   constructor(private readonly repo: IRealmRepository) {}
@@ -34,8 +34,7 @@ export class SetProjectStatusUseCase {
     };
     await this.repo.saveProject(updated);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: project.id,
       actor: input.actor,
       actorType: input.actorType ?? "human",
@@ -43,7 +42,6 @@ export class SetProjectStatusUseCase {
       from: project.status,
       to: input.to,
     });
-    await this.repo.appendTrace(trace);
 
     return updated;
   }

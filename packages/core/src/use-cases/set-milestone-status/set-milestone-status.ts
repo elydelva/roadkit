@@ -1,10 +1,10 @@
-import { Trace } from "../../entities/index.js";
 import type { Milestone } from "../../entities/index.js";
 import { MilestoneNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { StateMachineService } from "../../services/index.js";
-import { TraceId } from "../../value-objects/index.js";
 import type { MilestoneId, MilestoneStatus } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 interface SetMilestoneStatusInput {
   id: MilestoneId;
@@ -13,7 +13,7 @@ interface SetMilestoneStatusInput {
   actorType?: "human" | "agent";
 }
 
-export class SetMilestoneStatusUseCase {
+export class SetMilestoneStatusUseCase implements UseCase<SetMilestoneStatusInput, Milestone> {
   private readonly stateMachine = new StateMachineService();
 
   constructor(private readonly repo: IRealmRepository) {}
@@ -34,8 +34,7 @@ export class SetMilestoneStatusUseCase {
     };
     await this.repo.saveMilestone(updated);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: milestone.projectId,
       actor: input.actor,
       actorType: input.actorType ?? "human",
@@ -44,7 +43,6 @@ export class SetMilestoneStatusUseCase {
       from: milestone.status,
       to: input.to,
     });
-    await this.repo.appendTrace(trace);
 
     return updated;
   }

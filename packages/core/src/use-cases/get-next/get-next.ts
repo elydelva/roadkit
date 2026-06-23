@@ -2,6 +2,7 @@ import { DEFAULT_CONFIG, type RealmConfig, priorityRank } from "../../config/ind
 import type { Issue, Milestone, Project } from "../../entities/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
 import { DAGService } from "../../services/index.js";
+import type { UseCase } from "../use-case.js";
 
 export interface NextResult {
   issue: Issue;
@@ -9,7 +10,7 @@ export interface NextResult {
   milestone: Milestone | null;
 }
 
-export class GetNextUseCase {
+export class GetNextUseCase implements UseCase<void, NextResult | null> {
   private readonly dagService = new DAGService();
   private readonly rank: (p: string) => number;
 

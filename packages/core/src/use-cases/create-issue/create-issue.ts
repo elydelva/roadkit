@@ -1,15 +1,17 @@
-import { Issue, Trace } from "../../entities/index.js";
+import { Issue } from "../../entities/index.js";
 import type { CreateIssueParams } from "../../entities/index.js";
 import { MilestoneNotFoundError, ProjectNotFoundError } from "../../errors/index.js";
 import type { IRealmRepository } from "../../ports/index.js";
-import { IssueId, TraceId } from "../../value-objects/index.js";
+import { IssueId } from "../../value-objects/index.js";
+import { recordTrace } from "../record-trace.js";
+import type { UseCase } from "../use-case.js";
 
 type CreateIssueInput = Omit<CreateIssueParams, "id"> & {
   actor?: string;
   actorType?: "human" | "agent";
 };
 
-export class CreateIssueUseCase {
+export class CreateIssueUseCase implements UseCase<CreateIssueInput, Issue> {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(input: CreateIssueInput): Promise<Issue> {
@@ -31,15 +33,13 @@ export class CreateIssueUseCase {
     const issue = Issue.create({ ...input, id });
     await this.repo.saveIssue(issue);
 
-    const trace = Trace.create({
-      id: TraceId.generate(),
+    await recordTrace(this.repo, {
       projectId: input.projectId,
       issueId: id,
       actor: input.actor ?? input.author,
       actorType: input.actorType ?? "human",
       event: "issue_created",
     });
-    await this.repo.appendTrace(trace);
 
     return issue;
   }

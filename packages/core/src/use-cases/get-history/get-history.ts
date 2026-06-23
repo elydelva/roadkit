@@ -1,9 +1,10 @@
 import type { Trace } from "../../entities/index.js";
 import type { IRealmRepository, TraceFilter } from "../../ports/index.js";
+import type { UseCase } from "../use-case.js";
 
 export type HistoryFilter = TraceFilter;
 
-export class GetHistoryUseCase {
+export class GetHistoryUseCase implements UseCase<HistoryFilter, Trace[]> {
   constructor(private readonly repo: IRealmRepository) {}
 
   async execute(filter: HistoryFilter = {}): Promise<Trace[]> {
