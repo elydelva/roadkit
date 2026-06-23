@@ -34,10 +34,11 @@ export interface Container {
 }
 
 export function createContainer(realmRoot: string): Container {
-  const git = new GitAdapter();
-  // Git staging is performed by the repository using absolute, realm-rooted
-  // paths. The use-cases are intentionally constructed without a git adapter to
-  // avoid double-staging with incorrectly-rooted relative paths.
+  // Git runs in the realm root so staging works when ROADKIT_ROOT points
+  // outside the current working directory. Staging is performed by the
+  // repository (best-effort) using absolute, realm-rooted paths; the use-cases
+  // are deliberately git-less to avoid double-staging.
+  const git = new GitAdapter(realmRoot);
   const repo = new FsRealmRepository(realmRoot, git);
 
   return {

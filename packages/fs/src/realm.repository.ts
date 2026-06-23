@@ -94,8 +94,13 @@ export class FsRealmRepository implements IRealmRepository {
   }
 
   private async stage(filePath: string): Promise<void> {
-    if (this.git) {
+    if (!this.git) return;
+    try {
       await this.git.stage([filePath]);
+    } catch {
+      // Staging is best-effort: the file is already written. A non-git realm or
+      // a transient git failure must never abort a mutation or leave it half
+      // applied (e.g. entity written but its trace lost).
     }
   }
 

@@ -274,4 +274,33 @@ describe("FsRealmRepository", () => {
       expect(await repo.findTraces({})).toHaveLength(2);
     });
   });
+
+  describe("best-effort git staging", () => {
+    it("persists writes even when the git adapter throws", async () => {
+      let stageCalls = 0;
+      const failingGit = {
+        stage: async () => {
+          stageCalls++;
+          throw new Error("git boom");
+        },
+        isRepo: async () => true,
+      };
+      const gitRepo = new FsRealmRepository(tempDir, failingGit);
+
+      // A staging failure must NOT abort the mutation or lose the trace.
+      await gitRepo.saveProject(makeProject("PROJ-0001", "One"));
+      const t = Trace.create({
+        id: TraceId.generate(),
+        projectId: ProjectId.from("PROJ-0001"),
+        actor: "alice",
+        actorType: "human",
+        event: "project_created",
+      });
+      await gitRepo.appendTrace(t);
+
+      expect(stageCalls).toBeGreaterThan(0);
+      expect(await gitRepo.findProject(ProjectId.from("PROJ-0001"))).not.toBeNull();
+      expect(await gitRepo.findTraces({})).toHaveLength(1);
+    });
+  });
 });
