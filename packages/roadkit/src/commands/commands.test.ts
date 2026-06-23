@@ -171,4 +171,169 @@ describe("roadkit CLI commands", () => {
     cap.restore();
     expect(cap.lines.join("\n")).toContain("ISSUE-0001");
   });
+
+  it("context prints a human-readable summary with filters", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runMilestoneNew(container, { project: "PROJ-0001", title: "MVP", order: "1" });
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      milestone: "MILE-0001",
+      title: "Fix auth redirect",
+      priority: "high",
+    });
+    await runSpecNew(container, { project: "PROJ-0001", title: "Auth approach", tags: "auth" });
+
+    const cap = captureLog();
+    await runContext(container, {});
+    cap.restore();
+    const out = cap.lines.join("\n");
+    expect(out).toContain("Projects: 1");
+    expect(out).toContain("PROJ-0001");
+    expect(out).toContain("MILE-0001");
+    expect(out).toContain("ISSUE-0001");
+    expect(out).toContain("SPEC-0001");
+    expect(out).toContain("(high)");
+
+    // --project filter exercises the ContextFilter.projectId branch.
+    const projectCap = captureLog();
+    await runContext(container, { project: "PROJ-0001" });
+    projectCap.restore();
+    expect(projectCap.lines.join("\n")).toContain("PROJ-0001");
+
+    // --active filter exercises the ContextFilter.activeOnly branch (project is
+    // still pending, so no project body is rendered — just the summary line).
+    const activeCap = captureLog();
+    await runContext(container, { active: true });
+    activeCap.restore();
+    expect(activeCap.lines.join("\n")).toContain("Projects: 0");
+  });
+
+  it("context handles an empty realm", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+
+    const cap = captureLog();
+    await runContext(container, {});
+    cap.restore();
+    expect(cap.lines.join("\n")).toContain("Projects: 0");
+  });
+
+  it("history prints human-readable rows and honours filters", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "Fix auth redirect",
+      priority: "high",
+    });
+    await runIssueStart(container, "ISSUE-0001");
+
+    const cap = captureLog();
+    await runHistory(container, {});
+    cap.restore();
+    const out = cap.lines.join("\n");
+    expect(out).toContain("project_created");
+    expect(out).toContain("issue_started");
+    // formatTrace renders the from → to transition for status changes.
+    expect(out).toContain("→");
+
+    const filteredCap = captureLog();
+    await runHistory(container, {
+      project: "PROJ-0001",
+      issue: "ISSUE-0001",
+      event: "issue_started",
+      since: "2000-01-01",
+    });
+    filteredCap.restore();
+    expect(filteredCap.lines.join("\n")).toContain("issue_started");
+
+    const actorCap = captureLog();
+    await runHistory(container, { actor: "no-such-actor" });
+    actorCap.restore();
+    expect(actorCap.lines.join("\n")).toBe("No history found.");
+  });
+
+  it("history rejects an invalid --since", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+
+    const originalExit = process.exit;
+    const originalError = console.error;
+    const errors: string[] = [];
+    console.error = (...args: unknown[]) => {
+      errors.push(args.map(String).join(" "));
+    };
+    // @ts-expect-error test stub that throws to short-circuit `never`.
+    process.exit = () => {
+      throw new Error("exit");
+    };
+    try {
+      await expect(runHistory(container, { since: "not-a-date" })).rejects.toThrow("exit");
+      expect(errors.join("\n")).toContain("Invalid --since");
+    } finally {
+      process.exit = originalExit;
+      console.error = originalError;
+    }
+  });
+
+  it("next reports no eligible issue and emits JSON", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+
+    const cap = captureLog();
+    await runNext(container, {});
+    cap.restore();
+    expect(cap.lines.join("\n")).toBe("No eligible issue.");
+
+    const jsonCap = captureLog();
+    await runNext(container, { json: true });
+    jsonCap.restore();
+    expect(JSON.parse(jsonCap.lines.join("\n"))).toBeNull();
+  });
+
+  it("next emits JSON for an eligible issue", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runMilestoneNew(container, { project: "PROJ-0001", title: "MVP", order: "1" });
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      milestone: "MILE-0001",
+      title: "Fix auth redirect",
+      priority: "high",
+    });
+    const project = await container.repo.findProject(ProjectId.from("PROJ-0001"));
+    if (!project) throw new Error("project missing");
+    await container.repo.saveProject({ ...project, status: "active" });
+
+    const cap = captureLog();
+    await runNext(container, { json: true });
+    cap.restore();
+    const result = JSON.parse(cap.lines.join("\n"));
+    expect(result.issue.id).toBe("ISSUE-0001");
+    expect(result.project.id).toBe("PROJ-0001");
+    expect(result.milestone.id).toBe("MILE-0001");
+  });
+
+  it("project list prints projects and the empty case", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+
+    const emptyCap = captureLog();
+    await runProjectList(container, {});
+    emptyCap.restore();
+    expect(emptyCap.lines.join("\n")).toBe("No projects.");
+
+    await runProjectNew(container, { title: "Checkout revamp" });
+
+    const cap = captureLog();
+    await runProjectList(container, {});
+    cap.restore();
+    const out = cap.lines.join("\n");
+    expect(out).toContain("PROJ-0001");
+    expect(out).toContain("Checkout revamp");
+  });
 });
