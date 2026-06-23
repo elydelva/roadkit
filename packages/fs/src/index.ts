@@ -25,3 +25,4 @@ export { serializeMilestone } from "./serializers/milestone.serializer.js";
 export { serializeIssue } from "./serializers/issue.serializer.js";
 export { serializeSpec } from "./serializers/spec.serializer.js";
 export { serializeTrace } from "./serializers/trace.serializer.js";
+export { type EntityCodec, codecs } from "./codecs/codecs.js";

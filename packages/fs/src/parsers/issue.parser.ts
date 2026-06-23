@@ -1,90 +1,28 @@
-import type { Issue, IssueStatus, Rule } from "@roadkit/core";
+import type { Issue, IssueStatus } from "@roadkit/core";
 import { IssueId, MilestoneId, ProjectId } from "@roadkit/core";
+import {
+  toDate,
+  toDateOrNull,
+  toEnumValue,
+  toIdOrNull,
+  toNumberOrNull,
+  toRuleArray,
+  toStringArray,
+  toStringOrNull,
+} from "./coercers.js";
 import { parseFrontmatter } from "./frontmatter.parser.js";
 
-function toStringArray(val: unknown): string[] {
-  if (!Array.isArray(val)) return [];
-  return val.filter((v): v is string => typeof v === "string");
-}
-
-function toRuleArray(val: unknown): Rule[] {
-  if (!Array.isArray(val)) return [];
-  return val.filter(
-    (v): v is Rule =>
-      typeof v === "object" &&
-      v !== null &&
-      typeof (v as Record<string, unknown>).trigger === "string" &&
-      typeof (v as Record<string, unknown>).instruction === "string"
-  );
-}
-
-function toDate(val: unknown): Date {
-  if (val instanceof Date) return val;
-  if (typeof val === "string" || typeof val === "number") {
-    const d = new Date(val);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return new Date();
-}
-
-function toDateOrNull(val: unknown): Date | null {
-  if (val instanceof Date) return val;
-  if (typeof val === "string" || typeof val === "number") {
-    const d = new Date(val);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return null;
-}
-
-function toIssueStatus(val: unknown): IssueStatus {
-  const valid: IssueStatus[] = [
-    "not-started",
-    "in-progress",
-    "completed",
-    "abandoned",
-    "blocked",
-    "skipped",
-  ];
-  if (typeof val === "string" && valid.includes(val as IssueStatus)) {
-    return val as IssueStatus;
-  }
-  return "not-started";
-}
+const ISSUE_STATUSES: readonly IssueStatus[] = [
+  "not-started",
+  "in-progress",
+  "completed",
+  "abandoned",
+  "blocked",
+  "skipped",
+];
 
 function toPriority(val: unknown): string {
   return typeof val === "string" && val.length > 0 ? val : "none";
-}
-
-function toNumberOrNull(val: unknown): number | null {
-  if (typeof val === "number" && Number.isFinite(val)) return val;
-  if (typeof val === "string" && val.length > 0) {
-    const n = Number(val);
-    if (Number.isFinite(n)) return n;
-  }
-  return null;
-}
-
-function toStringOrNull(val: unknown): string | null {
-  if (typeof val === "string" && val.length > 0) return val;
-  return null;
-}
-
-function toIssueIdOrNull(val: unknown): IssueId | null {
-  if (typeof val !== "string" || val.length === 0) return null;
-  try {
-    return IssueId.from(val);
-  } catch {
-    return null;
-  }
-}
-
-function toMilestoneIdOrNull(val: unknown): MilestoneId | null {
-  if (typeof val !== "string" || val.length === 0) return null;
-  try {
-    return MilestoneId.from(val);
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -97,7 +35,7 @@ function toGatesArray(val: unknown): Array<IssueId | string> {
   const result: Array<IssueId | string> = [];
   for (const v of val) {
     if (typeof v !== "string" || v.length === 0) continue;
-    const id = toIssueIdOrNull(v);
+    const id = toIdOrNull(v, IssueId.from);
     result.push(id ?? v);
   }
   return result;
@@ -109,13 +47,13 @@ export function parseIssue(content: string): Issue {
   return {
     id: IssueId.from(String(data.id ?? "")),
     projectId: ProjectId.from(String(data.projectId ?? "")),
-    milestoneId: toMilestoneIdOrNull(data.milestoneId),
+    milestoneId: toIdOrNull(data.milestoneId, MilestoneId.from),
     title: typeof data.title === "string" ? data.title : "",
-    status: toIssueStatus(data.status),
+    status: toEnumValue(data.status, ISSUE_STATUSES, "not-started"),
     priority: toPriority(data.priority),
     estimate: toNumberOrNull(data.estimate),
     labels: toStringArray(data.labels),
-    parentId: toIssueIdOrNull(data.parentId),
+    parentId: toIdOrNull(data.parentId, IssueId.from),
     gates: toGatesArray(data.gates),
     rules: toRuleArray(data.rules),
     assignee: toStringOrNull(data.assignee),
