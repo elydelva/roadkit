@@ -49,6 +49,27 @@ describe("LintEngine", () => {
     expect(report.findings.some((f) => f.code === "id-matches-filename")).toBe(true);
   });
 
+  it("flags two files claiming the same id", () => {
+    const canonical = issue("ISSUE-0005", { status: "in-progress" });
+    canonical.file = ".roadkit/projects/PROJ-0001-p/issues/ISSUE-0005-good-slug.md";
+    const stale = issue("ISSUE-0005", { status: "not-started" });
+    stale.file = ".roadkit/projects/PROJ-0001-p/issues/ISSUE-0005-old-slug.md";
+
+    const report = engine.run(scan([project(), canonical, stale]));
+
+    const dups = report.findings.filter((f) => f.code === "unique-ids");
+    expect(dups.map((f) => f.file).sort()).toEqual([
+      ".roadkit/projects/PROJ-0001-p/issues/ISSUE-0005-good-slug.md",
+      ".roadkit/projects/PROJ-0001-p/issues/ISSUE-0005-old-slug.md",
+    ]);
+    expect(dups.every((f) => f.severity === "error")).toBe(true);
+  });
+
+  it("does not flag distinct ids as duplicates", () => {
+    const report = engine.run(scan([project(), issue("ISSUE-0001"), issue("ISSUE-0002")]));
+    expect(report.findings.some((f) => f.code === "unique-ids")).toBe(false);
+  });
+
   it("flags an invalid status", () => {
     const report = engine.run(scan([project(), issue("ISSUE-0001", { status: "wat" })]));
     expect(report.findings.some((f) => f.code === "status-valid")).toBe(true);
