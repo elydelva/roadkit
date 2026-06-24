@@ -57,6 +57,7 @@ export function parseIssue(content: string): Issue {
     gates: toGatesArray(data.gates),
     rules: toRuleArray(data.rules),
     assignee: toStringOrNull(data.assignee),
+    branch: toStringOrNull(data.branch),
     author: typeof data.author === "string" ? data.author : "",
     startedAt: toDateOrNull(data.startedAt),
     completedAt: toDateOrNull(data.completedAt),

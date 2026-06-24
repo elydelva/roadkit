@@ -21,6 +21,7 @@ interface IssueAddOptions extends ActorOptions {
   parent?: string;
   gates?: string;
   assignee?: string;
+  branch?: string;
   body?: string;
   json?: boolean;
 }
@@ -51,6 +52,7 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
     ...(opts.parent ? { parentId: IssueId.from(opts.parent) } : {}),
     gates: parseList(opts.gates),
     ...(opts.assignee ? { assignee: opts.assignee } : {}),
+    ...(opts.branch ? { branch: opts.branch } : {}),
     body: opts.body ?? "",
   });
 

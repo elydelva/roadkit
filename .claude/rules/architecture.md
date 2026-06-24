@@ -76,5 +76,6 @@ All mutation commands accept `--json` (returns the created/updated entity), plus
 - **Milestones / Priority** — used by `rkit next` to prioritize work order. Priority ordering follows `priority.levels` in `roadfig.yml` (index 0 = highest).
 - **Estimation** — `roadfig.yml` `estimation.scale` (none · linear · fibonacci · tshirt · exponential · hours) drives `--estimate <label|number>` resolution; estimates are stored as points and displayed as scale labels (e.g. `M`).
 - **Labels** — shared taxonomy declared under `roadfig.yml` `labels`.
+- **Assignee / Branch** — optional free-form strings on an issue. `assignee` names the responsible person; `branch` names the git branch where the issue is implemented. Both settable via `--assignee` / `--branch` on `issue add | start | complete` (start/complete only overwrite when the flag is passed). Not validated by lint; multiple issues may share a branch.
 - **Specs** — decision records attached to a project (the former ADR).
 - **Traces** — immutable audit log entries, one file per mutation.

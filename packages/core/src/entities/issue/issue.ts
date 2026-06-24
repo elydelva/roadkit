@@ -17,6 +17,7 @@ export interface Issue {
   gates: Array<IssueId | string>;
   rules: Rule[];
   assignee: string | null;
+  branch: string | null;
   author: string;
   startedAt: Date | null;
   completedAt: Date | null;
@@ -38,6 +39,7 @@ export interface CreateIssueParams {
   gates?: Array<IssueId | string>;
   rules?: Rule[];
   assignee?: string | null;
+  branch?: string | null;
   body?: string;
 }
 
@@ -57,6 +59,7 @@ export const Issue = {
       gates: params.gates ?? [],
       rules: params.rules ?? [],
       assignee: params.assignee ?? null,
+      branch: params.branch ?? null,
       author: params.author,
       startedAt: null,
       completedAt: null,

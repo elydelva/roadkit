@@ -6,6 +6,8 @@ import { type ActorOptions, resolveActor, serializeIssue } from "../shared.js";
 
 interface IssueCompleteOptions extends ActorOptions {
   json?: boolean;
+  assignee?: string;
+  branch?: string;
 }
 
 export async function runIssueComplete(
@@ -20,6 +22,8 @@ export async function runIssueComplete(
     actor,
     actorType,
     ...(note ? { note } : {}),
+    ...(opts.assignee ? { assignee: opts.assignee } : {}),
+    ...(opts.branch ? { branch: opts.branch } : {}),
   });
   getFormatter(opts.json ?? false).emit({
     json: serializeIssue(issue),
