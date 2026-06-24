@@ -1,19 +1,30 @@
 import { Command } from "commander";
 import { runBrief } from "./commands/brief.js";
+import { runConfigGet, runConfigSet } from "./commands/config.js";
 import { runContext } from "./commands/context.js";
+import { runDoctor } from "./commands/doctor.js";
 import { runHistory } from "./commands/history.js";
 import { runInit } from "./commands/init.js";
 import { runIssueAdd } from "./commands/issue/add.js";
 import { runIssueComplete } from "./commands/issue/complete.js";
+import { runIssueEdit } from "./commands/issue/edit.js";
+import { runIssueGateAdd, runIssueGateRemove } from "./commands/issue/gate.js";
+import { runIssueList } from "./commands/issue/list.js";
+import { runIssueRemove } from "./commands/issue/rm.js";
+import { runIssueShow } from "./commands/issue/show.js";
 import { runIssueStart } from "./commands/issue/start.js";
+import { runIssueStatus } from "./commands/issue/status.js";
 import { runLint } from "./commands/lint.js";
+import { runMilestoneList } from "./commands/milestone/list.js";
 import { runMilestoneNew } from "./commands/milestone/new.js";
 import { runMilestoneStart, runMilestoneStatus } from "./commands/milestone/status.js";
 import { runNext } from "./commands/next.js";
 import { runProjectList } from "./commands/project/list.js";
 import { runProjectNew } from "./commands/project/new.js";
 import { runProjectStart, runProjectStatus } from "./commands/project/status.js";
+import { runSpecList } from "./commands/spec/list.js";
 import { runSpecNew } from "./commands/spec/new.js";
+import { runSpecShow } from "./commands/spec/show.js";
 import { runSpecStatus } from "./commands/spec/status.js";
 import { createContainer } from "./container.js";
 
@@ -22,6 +33,15 @@ const CLI_VERSION = "0.1.1";
 
 function getRealmRoot(): string {
   return process.env.ROADKIT_ROOT ?? process.cwd();
+}
+
+/** Attach the standard actor-attribution + JSON options shared by mutations. */
+function withActor(command: Command): Command {
+  return command
+    .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change");
 }
 
 export function buildCLI(): Command {
@@ -136,6 +156,15 @@ export function buildCLI(): Command {
       await runMilestoneStart(await createContainer(getRealmRoot()), milestoneId, opts);
     });
 
+  milestone
+    .command("list")
+    .description("List milestones, ordered")
+    .option("--project <id>", "Scope to a project")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { project?: string; json?: boolean }) => {
+      await runMilestoneList(await createContainer(getRealmRoot()), opts);
+    });
+
   // --- issue ---
   const issue = program.command("issue").description("Manage issues");
 
@@ -206,6 +235,86 @@ export function buildCLI(): Command {
       }
     );
 
+  withActor(
+    issue
+      .command("edit <issueId>")
+      .description("Edit issue fields (clear nullable fields with --no-<field>)")
+      .option("--title <title>", "New title (renames the file)")
+      .option("--priority <priority>", "Priority level (see roadfig.yml)")
+      .option("--estimate <label|number>", "Estimate (scale label or number)")
+      .option("--no-estimate", "Clear the estimate")
+      .option("--milestone <id>", "Milestone id")
+      .option("--no-milestone", "Clear the milestone")
+      .option("--assignee <assignee>", "Assignee")
+      .option("--no-assignee", "Clear the assignee")
+      .option("--branch <name>", "Git branch")
+      .option("--no-branch", "Clear the branch")
+      .option("--parent <id>", "Parent issue id")
+      .option("--no-parent", "Clear the parent")
+      .option("--labels <labels>", "Comma-separated labels (replaces existing)")
+      .option("--gates <ids>", "Comma-separated gate ids (replaces existing)")
+  ).action(async (issueId: string, opts: Parameters<typeof runIssueEdit>[2]) => {
+    await runIssueEdit(await createContainer(getRealmRoot()), issueId, opts);
+  });
+
+  withActor(
+    issue
+      .command("retitle <issueId>")
+      .description("Rename an issue's title (renames the file atomically)")
+      .requiredOption("--title <title>", "New title")
+  ).action(async (issueId: string, opts: { title?: string }) => {
+    await runIssueEdit(await createContainer(getRealmRoot()), issueId, opts);
+  });
+
+  withActor(
+    issue
+      .command("status <issueId> <status>")
+      .description("Set issue status (not-started|in-progress|completed|abandoned|blocked|skipped)")
+  ).action(async (issueId: string, status: string, opts: { json?: boolean }) => {
+    await runIssueStatus(await createContainer(getRealmRoot()), issueId, status, opts);
+  });
+
+  withActor(issue.command("rm <issueId>").description("Delete an issue and all its files")).action(
+    async (issueId: string, opts: { json?: boolean }) => {
+      await runIssueRemove(await createContainer(getRealmRoot()), issueId, opts);
+    }
+  );
+
+  const gate = issue.command("gate").description("Manage issue gate dependencies");
+  withActor(gate.command("add <issueId> <gate>").description("Add a gate dependency")).action(
+    async (issueId: string, gateId: string, opts: { json?: boolean }) => {
+      await runIssueGateAdd(await createContainer(getRealmRoot()), issueId, gateId, opts);
+    }
+  );
+  withActor(gate.command("rm <issueId> <gate>").description("Remove a gate dependency")).action(
+    async (issueId: string, gateId: string, opts: { json?: boolean }) => {
+      await runIssueGateRemove(await createContainer(getRealmRoot()), issueId, gateId, opts);
+    }
+  );
+
+  issue
+    .command("show <issueId>")
+    .description("Show an issue with its history")
+    .option("--json", "Machine-readable output")
+    .action(async (issueId: string, opts: { json?: boolean }) => {
+      await runIssueShow(await createContainer(getRealmRoot()), issueId, opts);
+    });
+
+  issue
+    .command("list")
+    .description("List issues with optional filters")
+    .option("--project <id>", "Scope to a project")
+    .option("--status <status>", "Filter by status")
+    .option("--assignee <name>", "Filter by assignee")
+    .option("--milestone <id>", "Filter by milestone")
+    .option("--label <label>", "Filter by label")
+    .option("--branch <name>", "Filter by branch")
+    .option("--priority <priority>", "Filter by priority")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: Parameters<typeof runIssueList>[1]) => {
+      await runIssueList(await createContainer(getRealmRoot()), opts);
+    });
+
   // --- spec ---
   const spec = program.command("spec").description("Manage specs");
 
@@ -241,6 +350,23 @@ export function buildCLI(): Command {
     .option("--message <text>", "Trace note explaining the change")
     .action(async (specId: string, status: string, opts: { json?: boolean }) => {
       await runSpecStatus(await createContainer(getRealmRoot()), specId, status, opts);
+    });
+
+  spec
+    .command("list")
+    .description("List specs")
+    .option("--project <id>", "Scope to a project")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { project?: string; json?: boolean }) => {
+      await runSpecList(await createContainer(getRealmRoot()), opts);
+    });
+
+  spec
+    .command("show <specId>")
+    .description("Show a spec with its body")
+    .option("--json", "Machine-readable output")
+    .action(async (specId: string, opts: { json?: boolean }) => {
+      await runSpecShow(await createContainer(getRealmRoot()), specId, opts);
     });
 
   // --- top-level reads ---
@@ -303,6 +429,31 @@ export function buildCLI(): Command {
         await runHistory(await createContainer(getRealmRoot()), opts);
       }
     );
+
+  program
+    .command("doctor")
+    .description("Diagnose realm health; --fix repairs duplicate-id files")
+    .option("--fix", "Apply repairs (delete stale-slug duplicate files)")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { fix?: boolean; json?: boolean }) => {
+      await runDoctor(await createContainer(getRealmRoot()), opts);
+    });
+
+  const config = program.command("config").description("Inspect or edit roadfig.yml");
+  config
+    .command("get [key]")
+    .description("Print the config, or a dotted key (e.g. priority.default)")
+    .option("--json", "Machine-readable output")
+    .action(async (key: string | undefined, opts: { json?: boolean }) => {
+      await runConfigGet(await createContainer(getRealmRoot()), key, opts);
+    });
+  config
+    .command("set <key> <value>")
+    .description("Set priority.default, estimation.scale, or estimation.default")
+    .option("--json", "Machine-readable output")
+    .action(async (key: string, value: string, opts: { json?: boolean }) => {
+      await runConfigSet(await createContainer(getRealmRoot()), key, value, opts);
+    });
 
   return program;
 }
