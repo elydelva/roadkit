@@ -49,18 +49,22 @@ Agents are fast. They're also stateless — they have no memory of the decision 
 roadkit gives them that memory, in a format they can actually use:
 
 ```bash
-rkit context --issue ISSUE-0041 --json
-# Returns: current project state, applicable rules, blocked issues,
-#          what depends on this, what this depends on.
-# One command. Inject into system prompt. Done.
+rkit brief --issue ISSUE-0041
+# One inject-ready block: the focus issue, its rules grouped by trigger,
+# what it gates on (and why it's blocked), what it unblocks, the next
+# eligible issue, and recent activity. Add --json for a structured payload.
+# Paste into the system prompt. Done.
 ```
 
-And when an agent marks something complete, it's logged — with a trace, an actor, a timestamp. The audit trail is automatic.
+Every command speaks JSON. Reads (`brief`, `next`, `context`, `history`, `project list`) and **every mutation** accept `--json` and return the created or updated entity, so an agent can chain calls without scraping human text. On failure, `--json` prints `{"error":{"code","message"}}` on stderr and exits non-zero.
+
+An agent identifies itself once via the environment, and every change it makes is logged — with a trace, an actor, an actor type, a timestamp, and an optional reason. The audit trail is automatic.
 
 ```bash
-rkit issue complete ISSUE-0041 --actor "agent:claude" --message "Token rotation implemented"
+export ROADKIT_ACTOR="agent:claude" ROADKIT_ACTOR_TYPE="agent"
+rkit issue complete ISSUE-0041 --message "Token rotation implemented"
 # → issue status updated
-# → trace emitted
+# → trace emitted (actorType: agent, body: the message)
 # → next issue unblocked
 # → git staged, ready for your commit
 ```
@@ -69,7 +73,7 @@ rkit issue complete ISSUE-0041 --actor "agent:claude" --message "Token rotation 
 
 ## Rules that run
 
-You write constraints once. Every agent that works in your codebase respects them — enforced by git hooks, not trust.
+You write constraints once. Every agent that works in your codebase reads them before it acts.
 
 ```yaml
 # In any project, spec or issue frontmatter
@@ -83,7 +87,12 @@ rules:
       Schema must pass drizzle-kit check before this issue is marked done.
 ```
 
-The `pre-commit` hook runs `rkit lint` on every commit touching `.roadkit/`. It doesn't matter if a human or an agent wrote the files — the hook doesn't care.
+`rkit brief` surfaces these rules grouped by trigger, so the agent sees the constraints that apply before it touches a file — and `rkit issue start` records that they were acknowledged.
+
+Two layers keep the realm honest:
+
+- **Rules** are agent-prompt constraints — they describe intent (`before_edit`, `before_complete`) and are surfaced by `rkit brief` for the agent to honour.
+- **`rkit lint`** checks realm *structure* — well-formed ids, resolvable references, no gate cycles, config-conformant priority and labels. `rkit init` installs a `pre-commit` hook that runs it and blocks the commit on errors. It doesn't matter if a human or an agent wrote the files — the hook doesn't care.
 
 ---
 
@@ -145,7 +154,8 @@ npm install -g roadkit
 cd your-project
 rkit init
 # → roadfig.yml created
-# → git hooks installed
+# → AGENTS.md written (the agent loop, machine output, actor env vars)
+# → pre-commit hook installed (runs rkit lint)
 # → ready
 ```
 
