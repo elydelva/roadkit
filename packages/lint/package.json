@@ -21,8 +21,7 @@
     "clean": "rm -rf dist && rm -f tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@roadkit/core": "workspace:*",
-    "@roadkit/fs": "workspace:*"
+    "@roadkit/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:"

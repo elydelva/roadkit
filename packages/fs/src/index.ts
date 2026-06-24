@@ -26,3 +26,4 @@ export { serializeIssue } from "./serializers/issue.serializer.js";
 export { serializeSpec } from "./serializers/spec.serializer.js";
 export { serializeTrace } from "./serializers/trace.serializer.js";
 export { type EntityCodec, codecs } from "./codecs/codecs.js";
+export { scanRealmRaw } from "./scan/scan-realm-raw.js";

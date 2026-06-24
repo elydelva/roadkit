@@ -29,6 +29,7 @@ import { runIssueAdd } from "./issue/add.js";
 import { runIssueComplete } from "./issue/complete.js";
 import { runIssueStart } from "./issue/start.js";
 import { setJsonMode } from "./json-mode.js";
+import { runLint } from "./lint.js";
 import { runMilestoneNew } from "./milestone/new.js";
 import { runMilestoneStart, runMilestoneStatus } from "./milestone/status.js";
 import { runNext } from "./next.js";
@@ -520,6 +521,56 @@ describe("roadkit CLI commands", () => {
     expect(completed.actor).toBe("agent:claude");
     expect(completed.actorType).toBe("agent");
     expect(completed.body).toBe("rotation implemented");
+  });
+
+  it("lint passes a clean realm and fails on a dangling gate", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runIssueAdd(container, { project: "PROJ-0001", title: "Fine", priority: "high" });
+
+    const okCap = captureLog();
+    await runLint(container, {});
+    okCap.restore();
+    expect(okCap.lines.join("\n")).toContain("No issues");
+
+    // Dangling gate → references-exist error → exit 1.
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "Broken",
+      priority: "high",
+      gates: "ISSUE-9999",
+    });
+
+    const originalExit = process.exit;
+    let exitCode: number | undefined;
+    // @ts-expect-error test stub that throws to short-circuit `never`.
+    process.exit = (code?: number) => {
+      exitCode = code;
+      throw new Error("exit");
+    };
+    try {
+      const jsonCap = captureLog();
+      await expect(runLint(container, { json: true })).rejects.toThrow("exit");
+      jsonCap.restore();
+      const report = JSON.parse(jsonCap.lines.join("\n"));
+      expect(report.errorCount).toBeGreaterThan(0);
+      expect(report.findings.some((f: { code: string }) => f.code === "references-exist")).toBe(
+        true
+      );
+      expect(exitCode).toBe(1);
+
+      // Human path renders findings and a summary line.
+      const humanCap = captureLog();
+      await expect(runLint(container, {})).rejects.toThrow("exit");
+      humanCap.restore();
+      const out = humanCap.lines.join("\n");
+      expect(out).toContain("references-exist");
+      expect(out).toContain("error(s)");
+    } finally {
+      process.exit = originalExit;
+      setJsonMode(false);
+    }
   });
 
   it("emits a structured error envelope under --json and exits non-zero", async () => {

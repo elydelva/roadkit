@@ -50,6 +50,9 @@ export type {
 // Services
 export { StateMachineService, DAGService } from "./services/index.js";
 
+// Lint scan contract
+export type { RawEntityKind, RawEntityRecord, ScanDiagnostic, RealmScan } from "./lint/scan.js";
+
 // Use Cases
 export {
   CreateProjectUseCase,

@@ -6,6 +6,7 @@ import { runInit } from "./commands/init.js";
 import { runIssueAdd } from "./commands/issue/add.js";
 import { runIssueComplete } from "./commands/issue/complete.js";
 import { runIssueStart } from "./commands/issue/start.js";
+import { runLint } from "./commands/lint.js";
 import { runMilestoneNew } from "./commands/milestone/new.js";
 import { runMilestoneStart, runMilestoneStatus } from "./commands/milestone/status.js";
 import { runNext } from "./commands/next.js";
@@ -249,6 +250,14 @@ export function buildCLI(): Command {
     .option("--json", "Machine-readable output")
     .action(async (opts: { issue?: string; project?: string; json?: boolean }) => {
       await runBrief(await createContainer(getRealmRoot()), opts);
+    });
+
+  program
+    .command("lint")
+    .description("Check realm integrity (structure, references, cycles, config)")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { json?: boolean }) => {
+      await runLint(await createContainer(getRealmRoot()), opts);
     });
 
   program
