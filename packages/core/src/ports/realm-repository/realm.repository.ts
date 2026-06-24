@@ -42,6 +42,8 @@ export interface IRealmRepository {
   findIssuesForProject(projectId: ProjectId): Promise<Issue[]>;
   findAllIssues(): Promise<Issue[]>;
   saveIssue(issue: Issue): Promise<void>;
+  /** Delete every on-disk file claiming this issue id. No-op if none exist. */
+  deleteIssue(id: IssueId): Promise<void>;
 
   findSpec(id: SpecId): Promise<Spec | null>;
   findSpecsForProject(projectId: ProjectId): Promise<Spec[]>;

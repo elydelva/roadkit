@@ -196,9 +196,27 @@ export class FsRealmRepository implements IRealmRepository {
       throw new Error(`Cannot save under unknown project ${projectId.toString()}`);
     }
     await fs.mkdir(dir, { recursive: true });
-    const filePath = path.join(dir, `${id}-${slugify(title)}${MD_EXT}`);
+    const fileName = `${id}-${slugify(title)}${MD_EXT}`;
+    const filePath = path.join(dir, fileName);
     await fs.writeFile(filePath, content, "utf-8");
     await this.stage(filePath);
+    // A title change moves the slug, so the entity would otherwise be written to
+    // a new filename while the old-slug file lingers — two files claiming one id,
+    // which makes loads non-deterministic and breaks transitions. Remove every
+    // other file in this dir that claims the same id.
+    await this.removeStaleIdFiles(dir, id, fileName);
+  }
+
+  /** Delete files in `dir` that claim `id` but are not `keepFileName`. */
+  private async removeStaleIdFiles(dir: string, id: string, keepFileName: string): Promise<void> {
+    for (const entry of await readdirSafe(dir)) {
+      if (entry === keepFileName || !entry.endsWith(MD_EXT)) continue;
+      if (entry === `${id}${MD_EXT}` || entry.startsWith(`${id}-`)) {
+        const stalePath = path.join(dir, entry);
+        await fs.rm(stalePath, { force: true });
+        await this.stage(stalePath);
+      }
+    }
   }
 
   // ----- Milestone -----
@@ -249,6 +267,15 @@ export class FsRealmRepository implements IRealmRepository {
       issue.title,
       serializeIssue(issue)
     );
+  }
+
+  async deleteIssue(id: IssueId): Promise<void> {
+    const target = id.toString();
+    for (const entry of await readdirSafe(this.projectsRoot)) {
+      if (!entry.startsWith("PROJ-")) continue;
+      const dir = path.join(this.projectsRoot, entry, ISSUES_DIR);
+      await this.removeStaleIdFiles(dir, target, "");
+    }
   }
 
   // ----- Spec -----
