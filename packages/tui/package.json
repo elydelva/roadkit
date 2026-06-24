@@ -1,8 +1,8 @@
 {
   "name": "@roadkit/tui",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "roadkit terminal interface \u2014 Ink components",
+  "description": "roadkit terminal interface — Ink components",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",

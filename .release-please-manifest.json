@@ -1,9 +1,9 @@
 {
-  "packages/core": "0.1.0",
-  "packages/fs": "0.1.0",
-  "packages/git": "0.1.0",
-  "packages/lint": "0.1.0",
-  "packages/tui": "0.1.0",
-  "packages/sync": "0.1.0",
-  "packages/roadkit": "0.1.0"
+  "packages/core": "1.0.0",
+  "packages/fs": "1.0.0",
+  "packages/git": "1.0.0",
+  "packages/lint": "1.0.0",
+  "packages/tui": "1.0.0",
+  "packages/sync": "1.0.0",
+  "packages/roadkit": "1.0.0"
 }
