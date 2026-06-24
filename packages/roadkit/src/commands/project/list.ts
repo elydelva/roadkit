@@ -1,4 +1,5 @@
 import type { Container } from "../../container.js";
+import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
 import { serializeProject } from "../shared.js";
 
@@ -10,6 +11,7 @@ export async function runProjectList(
   container: Container,
   opts: ProjectListOptions
 ): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const projects = await container.repo.findAllProjects();
 
   getFormatter(opts.json ?? false).emit({

@@ -1,4 +1,5 @@
 import type { Issue, Milestone, Project, RealmContext, Spec, Trace } from "@roadkit/core";
+import { formatJsonError, isJsonMode } from "./json-mode.js";
 
 export { formatEstimate } from "@roadkit/core";
 
@@ -18,7 +19,11 @@ export function parseList(raw: string | undefined): string[] {
 
 /** Print an error to stderr and exit with code 1. */
 export function fail(message: string): never {
-  console.error(`Error: ${message}`);
+  if (isJsonMode()) {
+    console.error(formatJsonError("ValidationError", message));
+  } else {
+    console.error(`Error: ${message}`);
+  }
   process.exit(1);
 }
 

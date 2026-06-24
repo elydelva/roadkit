@@ -1,11 +1,25 @@
 import { IssueId } from "@roadkit/core";
 import type { Container } from "../../container.js";
-import { resolveAuthor } from "../shared.js";
+import { setJsonMode } from "../json-mode.js";
+import { getFormatter } from "../output.js";
+import { resolveAuthor, serializeIssue } from "../shared.js";
 
-export async function runIssueComplete(container: Container, idRaw: string): Promise<void> {
+interface IssueCompleteOptions {
+  json?: boolean;
+}
+
+export async function runIssueComplete(
+  container: Container,
+  idRaw: string,
+  opts: IssueCompleteOptions = {}
+): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const issue = await container.completeIssue.execute({
     id: IssueId.from(idRaw),
     actor: resolveAuthor(),
   });
-  console.log(`✓ Completed ${issue.id.toString()} — ${issue.title}`);
+  getFormatter(opts.json ?? false).emit({
+    json: serializeIssue(issue),
+    human: () => console.log(`✓ Completed ${issue.id.toString()} — ${issue.title}`),
+  });
 }

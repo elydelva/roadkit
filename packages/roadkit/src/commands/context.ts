@@ -1,5 +1,6 @@
 import { type ContextFilter, ProjectId } from "@roadkit/core";
 import type { Container } from "../container.js";
+import { setJsonMode } from "./json-mode.js";
 import { getFormatter } from "./output.js";
 import { formatEstimate, serializeContext } from "./shared.js";
 
@@ -10,6 +11,7 @@ interface ContextOptions {
 }
 
 export async function runContext(container: Container, opts: ContextOptions): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const filter: ContextFilter = {};
   if (opts.project) filter.projectId = ProjectId.from(opts.project);
   if (opts.active) filter.activeOnly = true;

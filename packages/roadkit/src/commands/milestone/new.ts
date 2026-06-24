@@ -1,5 +1,7 @@
 import type { Container } from "../../container.js";
-import { fail, resolveAuthor } from "../shared.js";
+import { setJsonMode } from "../json-mode.js";
+import { getFormatter } from "../output.js";
+import { fail, resolveAuthor, serializeMilestone } from "../shared.js";
 import { parseProjectId, requireOption } from "../validators.js";
 
 interface MilestoneNewOptions {
@@ -8,12 +10,14 @@ interface MilestoneNewOptions {
   order?: string;
   targetDate?: string;
   body?: string;
+  json?: boolean;
 }
 
 export async function runMilestoneNew(
   container: Container,
   opts: MilestoneNewOptions
 ): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const projectId = parseProjectId(opts.project);
   const title = requireOption(opts.title, "--title");
   const orderRaw = requireOption(opts.order, "--order");
@@ -38,6 +42,11 @@ export async function runMilestoneNew(
     body: opts.body ?? "",
   });
 
-  console.log(`✓ Created ${milestone.id.toString()} — ${milestone.title}`);
-  console.log(`  Project: ${milestone.projectId.toString()}`);
+  getFormatter(opts.json ?? false).emit({
+    json: serializeMilestone(milestone),
+    human: () => {
+      console.log(`✓ Created ${milestone.id.toString()} — ${milestone.title}`);
+      console.log(`  Project: ${milestone.projectId.toString()}`);
+    },
+  });
 }

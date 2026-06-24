@@ -13,6 +13,8 @@ import {
   GetHistoryUseCase,
   GetNextUseCase,
   ProjectId,
+  SetMilestoneStatusUseCase,
+  SetProjectStatusUseCase,
   SetSpecStatusUseCase,
   StartIssueUseCase,
 } from "@roadkit/core";
@@ -24,10 +26,13 @@ import { runInit } from "./init.js";
 import { runIssueAdd } from "./issue/add.js";
 import { runIssueComplete } from "./issue/complete.js";
 import { runIssueStart } from "./issue/start.js";
+import { setJsonMode } from "./json-mode.js";
 import { runMilestoneNew } from "./milestone/new.js";
+import { runMilestoneStart, runMilestoneStatus } from "./milestone/status.js";
 import { runNext } from "./next.js";
 import { runProjectList } from "./project/list.js";
 import { runProjectNew } from "./project/new.js";
+import { runProjectStart, runProjectStatus } from "./project/status.js";
 import { runSpecNew } from "./spec/new.js";
 import { runSpecStatus } from "./spec/status.js";
 
@@ -49,9 +54,25 @@ function testContainer(realmRoot: string): Container {
     completeIssue: new CompleteIssueUseCase(repo),
     createSpec: new CreateSpecUseCase(repo),
     setSpecStatus: new SetSpecStatusUseCase(repo),
+    setProjectStatus: new SetProjectStatusUseCase(repo),
+    setMilestoneStatus: new SetMilestoneStatusUseCase(repo),
     getNext: new GetNextUseCase(repo),
     getContext: new GetContextUseCase(repo),
     getHistory: new GetHistoryUseCase(repo),
+  };
+}
+
+function captureError(): { lines: string[]; restore: () => void } {
+  const lines: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    lines.push(args.map((a) => (typeof a === "string" ? a : String(a))).join(" "));
+  };
+  return {
+    lines,
+    restore: () => {
+      console.error = original;
+    },
   };
 }
 
@@ -337,5 +358,107 @@ describe("roadkit CLI commands", () => {
     const out = cap.lines.join("\n");
     expect(out).toContain("PROJ-0001");
     expect(out).toContain("Checkout revamp");
+  });
+
+  it("mutations emit the created/updated entity as JSON", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+
+    const projCap = captureLog();
+    await runProjectNew(container, { title: "Checkout revamp", json: true });
+    projCap.restore();
+    const proj = JSON.parse(projCap.lines.join("\n"));
+    expect(proj.id).toBe("PROJ-0001");
+    expect(proj.status).toBe("planned");
+
+    const statusCap = captureLog();
+    await runProjectStart(container, "PROJ-0001", { json: true });
+    statusCap.restore();
+    expect(JSON.parse(statusCap.lines.join("\n")).status).toBe("active");
+
+    // Explicit status path (planned→paused→active) covers runProjectStatus directly.
+    const pauseCap = captureLog();
+    await runProjectStatus(container, "PROJ-0001", "paused", { json: true });
+    pauseCap.restore();
+    expect(JSON.parse(pauseCap.lines.join("\n")).status).toBe("paused");
+    await runProjectStatus(container, "PROJ-0001", "active");
+
+    const mileCap = captureLog();
+    await runMilestoneNew(container, {
+      project: "PROJ-0001",
+      title: "MVP",
+      order: "1",
+      json: true,
+    });
+    mileCap.restore();
+    expect(JSON.parse(mileCap.lines.join("\n")).id).toBe("MILE-0001");
+
+    const mileStatusCap = captureLog();
+    await runMilestoneStart(container, "MILE-0001", { json: true });
+    mileStatusCap.restore();
+    expect(JSON.parse(mileStatusCap.lines.join("\n")).status).toBe("active");
+
+    const issueCap = captureLog();
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      milestone: "MILE-0001",
+      title: "Fix auth redirect",
+      priority: "high",
+      json: true,
+    });
+    issueCap.restore();
+    const issue = JSON.parse(issueCap.lines.join("\n"));
+    expect(issue.id).toBe("ISSUE-0001");
+    expect(issue.priority).toBe("high");
+
+    const startCap = captureLog();
+    await runIssueStart(container, "ISSUE-0001", { json: true });
+    startCap.restore();
+    expect(JSON.parse(startCap.lines.join("\n")).status).toBe("in-progress");
+
+    const completeCap = captureLog();
+    await runIssueComplete(container, "ISSUE-0001", { json: true });
+    completeCap.restore();
+    expect(JSON.parse(completeCap.lines.join("\n")).status).toBe("completed");
+
+    const specCap = captureLog();
+    await runSpecNew(container, { project: "PROJ-0001", title: "Auth approach", json: true });
+    specCap.restore();
+    expect(JSON.parse(specCap.lines.join("\n")).id).toBe("SPEC-0001");
+
+    const specStatusCap = captureLog();
+    await runSpecStatus(container, "SPEC-0001", "proposed", { json: true });
+    specStatusCap.restore();
+    expect(JSON.parse(specStatusCap.lines.join("\n")).status).toBe("proposed");
+  });
+
+  it("emits a structured error envelope under --json and exits non-zero", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+
+    const originalExit = process.exit;
+    const errCap = captureError();
+    // @ts-expect-error test stub that throws to short-circuit `never`.
+    process.exit = () => {
+      throw new Error("exit");
+    };
+    try {
+      await expect(
+        runIssueAdd(container, {
+          project: "PROJ-0001",
+          title: "Bad",
+          priority: "NOPE",
+          json: true,
+        })
+      ).rejects.toThrow("exit");
+      const payload = JSON.parse(errCap.lines.join("\n"));
+      expect(payload.error.code).toBe("ValidationError");
+      expect(payload.error.message).toContain("Invalid --priority");
+    } finally {
+      process.exit = originalExit;
+      errCap.restore();
+      setJsonMode(false);
+    }
   });
 });

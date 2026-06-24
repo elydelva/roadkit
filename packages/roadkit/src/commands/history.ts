@@ -1,6 +1,7 @@
 import type { HistoryFilter, Trace, TraceEvent } from "@roadkit/core";
 import { IssueId, ProjectId, SpecId } from "@roadkit/core";
 import type { Container } from "../container.js";
+import { setJsonMode } from "./json-mode.js";
 import { getFormatter } from "./output.js";
 import { fail, serializeTrace } from "./shared.js";
 
@@ -26,6 +27,7 @@ function formatTrace(trace: Trace): string {
 }
 
 export async function runHistory(container: Container, opts: HistoryOptions): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const filter: HistoryFilter = {};
 
   if (opts.project) filter.projectId = ProjectId.from(opts.project);

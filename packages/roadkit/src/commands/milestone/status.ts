@@ -1,14 +1,22 @@
 import { MilestoneId, type MilestoneStatus } from "@roadkit/core";
 import type { Container } from "../../container.js";
-import { fail, resolveAuthor } from "../shared.js";
+import { setJsonMode } from "../json-mode.js";
+import { getFormatter } from "../output.js";
+import { fail, resolveAuthor, serializeMilestone } from "../shared.js";
 
 const MILESTONE_STATUSES: ReadonlySet<string> = new Set(["pending", "active", "done"]);
+
+interface StatusOptions {
+  json?: boolean;
+}
 
 export async function runMilestoneStatus(
   container: Container,
   idRaw: string,
-  statusRaw: string
+  statusRaw: string,
+  opts: StatusOptions = {}
 ): Promise<void> {
+  setJsonMode(opts.json ?? false);
   if (!MILESTONE_STATUSES.has(statusRaw)) {
     fail(`Invalid status: ${statusRaw} (expected pending|active|done)`);
   }
@@ -19,9 +27,16 @@ export async function runMilestoneStatus(
     actor: resolveAuthor(),
   });
 
-  console.log(`✓ ${milestone.id.toString()} → ${milestone.status}`);
+  getFormatter(opts.json ?? false).emit({
+    json: serializeMilestone(milestone),
+    human: () => console.log(`✓ ${milestone.id.toString()} → ${milestone.status}`),
+  });
 }
 
-export async function runMilestoneStart(container: Container, idRaw: string): Promise<void> {
-  await runMilestoneStatus(container, idRaw, "active");
+export async function runMilestoneStart(
+  container: Container,
+  idRaw: string,
+  opts: StatusOptions = {}
+): Promise<void> {
+  await runMilestoneStatus(container, idRaw, "active", opts);
 }
