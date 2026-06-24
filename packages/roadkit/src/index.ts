@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 import { buildCLI } from "./cli.js";
+import { formatJsonError, isJsonMode } from "./commands/json-mode.js";
 
 const program = buildCLI();
 
 program.parseAsync(process.argv).catch((err: unknown) => {
-  if (err instanceof Error) {
-    console.error(`Error: ${err.message}`);
+  const code = err instanceof Error ? err.name : "UnexpectedError";
+  const message = err instanceof Error ? err.message : "An unexpected error occurred";
+  if (isJsonMode()) {
+    console.error(formatJsonError(code, message));
   } else {
-    console.error("An unexpected error occurred");
+    console.error(`Error: ${message}`);
   }
   process.exit(1);
 });

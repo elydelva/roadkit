@@ -46,7 +46,8 @@ export function buildCLI(): Command {
     .requiredOption("--title <title>", "Project title")
     .option("--leads <leads>", "Comma-separated leads")
     .option("--body <body>", "Project body")
-    .action(async (opts: { title?: string; leads?: string; body?: string }) => {
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { title?: string; leads?: string; body?: string; json?: boolean }) => {
       await runProjectNew(await createContainer(getRealmRoot()), opts);
     });
 
@@ -61,15 +62,17 @@ export function buildCLI(): Command {
   project
     .command("status <projectId> <status>")
     .description("Change a project's status (planned|active|paused|completed|cancelled)")
-    .action(async (projectId: string, status: string) => {
-      await runProjectStatus(await createContainer(getRealmRoot()), projectId, status);
+    .option("--json", "Machine-readable output")
+    .action(async (projectId: string, status: string, opts: { json?: boolean }) => {
+      await runProjectStatus(await createContainer(getRealmRoot()), projectId, status, opts);
     });
 
   project
     .command("start <projectId>")
     .description("Transition a planned project to active")
-    .action(async (projectId: string) => {
-      await runProjectStart(await createContainer(getRealmRoot()), projectId);
+    .option("--json", "Machine-readable output")
+    .action(async (projectId: string, opts: { json?: boolean }) => {
+      await runProjectStart(await createContainer(getRealmRoot()), projectId, opts);
     });
 
   // --- milestone ---
@@ -83,6 +86,7 @@ export function buildCLI(): Command {
     .requiredOption("--order <n>", "Milestone order")
     .option("--target-date <iso>", "Target date (ISO 8601)")
     .option("--body <body>", "Milestone body")
+    .option("--json", "Machine-readable output")
     .action(
       async (opts: {
         project?: string;
@@ -90,6 +94,7 @@ export function buildCLI(): Command {
         order?: string;
         targetDate?: string;
         body?: string;
+        json?: boolean;
       }) => {
         await runMilestoneNew(await createContainer(getRealmRoot()), opts);
       }
@@ -98,15 +103,17 @@ export function buildCLI(): Command {
   milestone
     .command("status <milestoneId> <status>")
     .description("Change a milestone's status (pending|active|done)")
-    .action(async (milestoneId: string, status: string) => {
-      await runMilestoneStatus(await createContainer(getRealmRoot()), milestoneId, status);
+    .option("--json", "Machine-readable output")
+    .action(async (milestoneId: string, status: string, opts: { json?: boolean }) => {
+      await runMilestoneStatus(await createContainer(getRealmRoot()), milestoneId, status, opts);
     });
 
   milestone
     .command("start <milestoneId>")
     .description("Transition a pending milestone to active")
-    .action(async (milestoneId: string) => {
-      await runMilestoneStart(await createContainer(getRealmRoot()), milestoneId);
+    .option("--json", "Machine-readable output")
+    .action(async (milestoneId: string, opts: { json?: boolean }) => {
+      await runMilestoneStart(await createContainer(getRealmRoot()), milestoneId, opts);
     });
 
   // --- issue ---
@@ -125,6 +132,7 @@ export function buildCLI(): Command {
     .option("--gates <ids>", "Comma-separated gate ids")
     .option("--assignee <assignee>", "Assignee")
     .option("--body <body>", "Issue body")
+    .option("--json", "Machine-readable output")
     .action(
       async (opts: {
         project?: string;
@@ -137,6 +145,7 @@ export function buildCLI(): Command {
         gates?: string;
         assignee?: string;
         body?: string;
+        json?: boolean;
       }) => {
         await runIssueAdd(await createContainer(getRealmRoot()), opts);
       }
@@ -145,15 +154,17 @@ export function buildCLI(): Command {
   issue
     .command("start <issueId>")
     .description("Mark an issue as in-progress")
-    .action(async (issueId: string) => {
-      await runIssueStart(await createContainer(getRealmRoot()), issueId);
+    .option("--json", "Machine-readable output")
+    .action(async (issueId: string, opts: { json?: boolean }) => {
+      await runIssueStart(await createContainer(getRealmRoot()), issueId, opts);
     });
 
   issue
     .command("complete <issueId>")
     .description("Mark an issue as completed")
-    .action(async (issueId: string) => {
-      await runIssueComplete(await createContainer(getRealmRoot()), issueId);
+    .option("--json", "Machine-readable output")
+    .action(async (issueId: string, opts: { json?: boolean }) => {
+      await runIssueComplete(await createContainer(getRealmRoot()), issueId, opts);
     });
 
   // --- spec ---
@@ -166,15 +177,25 @@ export function buildCLI(): Command {
     .requiredOption("--title <title>", "Spec title")
     .option("--tags <tags>", "Comma-separated tags")
     .option("--body <body>", "Spec body")
-    .action(async (opts: { project?: string; title?: string; tags?: string; body?: string }) => {
-      await runSpecNew(await createContainer(getRealmRoot()), opts);
-    });
+    .option("--json", "Machine-readable output")
+    .action(
+      async (opts: {
+        project?: string;
+        title?: string;
+        tags?: string;
+        body?: string;
+        json?: boolean;
+      }) => {
+        await runSpecNew(await createContainer(getRealmRoot()), opts);
+      }
+    );
 
   spec
     .command("status <specId> <status>")
     .description("Change a spec's status")
-    .action(async (specId: string, status: string) => {
-      await runSpecStatus(await createContainer(getRealmRoot()), specId, status);
+    .option("--json", "Machine-readable output")
+    .action(async (specId: string, status: string, opts: { json?: boolean }) => {
+      await runSpecStatus(await createContainer(getRealmRoot()), specId, status, opts);
     });
 
   // --- top-level reads ---

@@ -1,6 +1,8 @@
 import { IssueId, MilestoneId } from "@roadkit/core";
 import type { Container } from "../../container.js";
-import { parseList, resolveAuthor } from "../shared.js";
+import { setJsonMode } from "../json-mode.js";
+import { getFormatter } from "../output.js";
+import { parseList, resolveAuthor, serializeIssue } from "../shared.js";
 import {
   parseProjectId,
   requireOption,
@@ -20,9 +22,11 @@ interface IssueAddOptions {
   gates?: string;
   assignee?: string;
   body?: string;
+  json?: boolean;
 }
 
 export async function runIssueAdd(container: Container, opts: IssueAddOptions): Promise<void> {
+  setJsonMode(opts.json ?? false);
   const projectId = parseProjectId(opts.project);
   const title = requireOption(opts.title, "--title");
 
@@ -47,9 +51,14 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
     body: opts.body ?? "",
   });
 
-  console.log(`✓ Created ${issue.id.toString()} — ${issue.title}`);
-  console.log(`  Project: ${issue.projectId.toString()}`);
-  if (issue.milestoneId) {
-    console.log(`  Milestone: ${issue.milestoneId.toString()}`);
-  }
+  getFormatter(opts.json ?? false).emit({
+    json: serializeIssue(issue),
+    human: () => {
+      console.log(`✓ Created ${issue.id.toString()} — ${issue.title}`);
+      console.log(`  Project: ${issue.projectId.toString()}`);
+      if (issue.milestoneId) {
+        console.log(`  Milestone: ${issue.milestoneId.toString()}`);
+      }
+    },
+  });
 }
