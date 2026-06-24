@@ -10,6 +10,7 @@ interface CompleteIssueInput {
   id: IssueId;
   actor: string;
   actorType?: "human" | "agent";
+  note?: string;
 }
 
 export class CompleteIssueUseCase implements UseCase<CompleteIssueInput, Issue> {
@@ -48,6 +49,7 @@ export class CompleteIssueUseCase implements UseCase<CompleteIssueInput, Issue> 
       event: "issue_completed",
       from: issue.status,
       to: "completed",
+      body: input.note,
     });
 
     return updated;

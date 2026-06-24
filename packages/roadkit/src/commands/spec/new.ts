@@ -1,10 +1,10 @@
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { parseList, resolveAuthor, serializeSpec } from "../shared.js";
+import { type ActorOptions, parseList, resolveActor, serializeSpec } from "../shared.js";
 import { parseProjectId, requireOption } from "../validators.js";
 
-interface SpecNewOptions {
+interface SpecNewOptions extends ActorOptions {
   project?: string;
   title?: string;
   tags?: string;
@@ -17,11 +17,14 @@ export async function runSpecNew(container: Container, opts: SpecNewOptions): Pr
   const projectId = parseProjectId(opts.project);
   const title = requireOption(opts.title, "--title");
 
-  const author = resolveAuthor();
+  const { actor, actorType, note } = resolveActor(opts);
   const spec = await container.createSpec.execute({
     projectId,
     title,
-    author,
+    author: actor,
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
     tags: parseList(opts.tags),
     body: opts.body ?? "",
   });

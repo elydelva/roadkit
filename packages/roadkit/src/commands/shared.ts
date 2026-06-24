@@ -5,7 +5,38 @@ export { formatEstimate } from "@roadkit/core";
 
 /** Resolve the acting author/actor from the environment. */
 export function resolveAuthor(): string {
-  return process.env.GIT_AUTHOR_NAME ?? process.env.USER ?? "unknown";
+  return process.env.ROADKIT_ACTOR ?? process.env.GIT_AUTHOR_NAME ?? process.env.USER ?? "unknown";
+}
+
+export interface ActorOptions {
+  actor?: string;
+  actorType?: string;
+  message?: string;
+}
+
+export interface ResolvedActor {
+  actor: string;
+  actorType: "human" | "agent";
+  note?: string;
+}
+
+/**
+ * Resolve who is acting and how to attribute it, for any mutation. Precedence is
+ * flag > env > fallback. `--actor-type` (or ROADKIT_ACTOR_TYPE) marks an agent so
+ * traces record `actorType:"agent"`; `--message` becomes the trace body (the why).
+ */
+export function resolveActor(opts: ActorOptions): ResolvedActor {
+  const actor = opts.actor ?? resolveAuthor();
+  const rawType = opts.actorType ?? process.env.ROADKIT_ACTOR_TYPE;
+  if (rawType !== undefined && rawType !== "human" && rawType !== "agent") {
+    fail(`Invalid --actor-type: ${rawType} (expected human|agent)`);
+  }
+  const actorType: "human" | "agent" = rawType === "agent" ? "agent" : "human";
+  return {
+    actor,
+    actorType,
+    ...(opts.message ? { note: opts.message } : {}),
+  };
 }
 
 /** Parse a comma-separated list into a trimmed, non-empty string array. */

@@ -2,7 +2,7 @@ import { IssueId, MilestoneId } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { parseList, resolveAuthor, serializeIssue } from "../shared.js";
+import { type ActorOptions, parseList, resolveActor, serializeIssue } from "../shared.js";
 import {
   parseProjectId,
   requireOption,
@@ -11,7 +11,7 @@ import {
   validateLabelsAgainstTaxonomy,
 } from "../validators.js";
 
-interface IssueAddOptions {
+interface IssueAddOptions extends ActorOptions {
   project?: string;
   milestone?: string;
   title?: string;
@@ -36,11 +36,14 @@ export async function runIssueAdd(container: Container, opts: IssueAddOptions): 
   const labels = parseList(opts.labels);
   validateLabelsAgainstTaxonomy(labels, container.config);
 
-  const author = resolveAuthor();
+  const { actor, actorType, note } = resolveActor(opts);
   const issue = await container.createIssue.execute({
     projectId,
     title,
-    author,
+    author: actor,
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
     priority,
     ...(opts.milestone ? { milestoneId: MilestoneId.from(opts.milestone) } : {}),
     ...(estimate !== undefined ? { estimate } : {}),

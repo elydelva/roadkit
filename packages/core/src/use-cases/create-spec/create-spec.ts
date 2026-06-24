@@ -9,6 +9,7 @@ import type { UseCase } from "../use-case.js";
 type CreateSpecInput = Omit<CreateSpecParams, "id"> & {
   actor?: string;
   actorType?: "human" | "agent";
+  note?: string;
 };
 
 export class CreateSpecUseCase implements UseCase<CreateSpecInput, Spec> {
@@ -32,6 +33,7 @@ export class CreateSpecUseCase implements UseCase<CreateSpecInput, Spec> {
       actor: input.actor ?? input.author,
       actorType: input.actorType ?? "human",
       event: "spec_created",
+      body: input.note,
     });
 
     return spec;

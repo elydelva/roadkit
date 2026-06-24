@@ -14,6 +14,7 @@ import {
 import {
   fail,
   parseList,
+  resolveActor,
   resolveAuthor,
   serializeContext,
   serializeIssue,
@@ -55,6 +56,71 @@ describe("shared helpers", () => {
       unset("GIT_AUTHOR_NAME");
       unset("USER");
       expect(resolveAuthor()).toBe("unknown");
+    });
+  });
+
+  describe("resolveActor", () => {
+    const saved = {
+      actor: process.env.ROADKIT_ACTOR,
+      type: process.env.ROADKIT_ACTOR_TYPE,
+      author: process.env.GIT_AUTHOR_NAME,
+      user: process.env.USER,
+    };
+    const unset = (key: string): void => Reflect.deleteProperty(process.env, key);
+    const restore = (key: string, val: string | undefined): void => {
+      if (val === undefined) unset(key);
+      else process.env[key] = val;
+    };
+
+    afterEach(() => {
+      restore("ROADKIT_ACTOR", saved.actor);
+      restore("ROADKIT_ACTOR_TYPE", saved.type);
+      restore("GIT_AUTHOR_NAME", saved.author);
+      restore("USER", saved.user);
+    });
+
+    it("prefers the --actor flag over env", () => {
+      process.env.ROADKIT_ACTOR = "env-actor";
+      expect(resolveActor({ actor: "flag-actor" }).actor).toBe("flag-actor");
+    });
+
+    it("falls back to ROADKIT_ACTOR then resolveAuthor", () => {
+      unset("ROADKIT_ACTOR");
+      process.env.GIT_AUTHOR_NAME = "git-actor";
+      expect(resolveActor({}).actor).toBe("git-actor");
+      process.env.ROADKIT_ACTOR = "env-actor";
+      expect(resolveActor({}).actor).toBe("env-actor");
+    });
+
+    it("marks agents via flag or env, defaulting to human", () => {
+      unset("ROADKIT_ACTOR_TYPE");
+      expect(resolveActor({}).actorType).toBe("human");
+      expect(resolveActor({ actorType: "agent" }).actorType).toBe("agent");
+      process.env.ROADKIT_ACTOR_TYPE = "agent";
+      expect(resolveActor({}).actorType).toBe("agent");
+    });
+
+    it("carries --message as the trace note", () => {
+      expect(resolveActor({ message: "because" }).note).toBe("because");
+      expect(resolveActor({}).note).toBeUndefined();
+    });
+
+    it("rejects an invalid --actor-type", () => {
+      const originalExit = process.exit;
+      const originalError = console.error;
+      const errors: string[] = [];
+      console.error = (...args: unknown[]) => errors.push(args.map(String).join(" "));
+      // @ts-expect-error test stub that throws to short-circuit `never`.
+      process.exit = () => {
+        throw new Error("exit");
+      };
+      try {
+        expect(() => resolveActor({ actorType: "robot" })).toThrow("exit");
+        expect(errors.join("\n")).toContain("Invalid --actor-type");
+      } finally {
+        process.exit = originalExit;
+        console.error = originalError;
+      }
     });
   });
 

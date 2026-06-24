@@ -2,7 +2,7 @@ import { ProjectId, type ProjectStatus } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { fail, resolveAuthor, serializeProject } from "../shared.js";
+import { type ActorOptions, fail, resolveActor, serializeProject } from "../shared.js";
 
 const PROJECT_STATUSES: ReadonlySet<string> = new Set([
   "planned",
@@ -12,7 +12,7 @@ const PROJECT_STATUSES: ReadonlySet<string> = new Set([
   "cancelled",
 ]);
 
-interface StatusOptions {
+interface StatusOptions extends ActorOptions {
   json?: boolean;
 }
 
@@ -27,10 +27,13 @@ export async function runProjectStatus(
     fail(`Invalid status: ${statusRaw} (expected planned|active|paused|completed|cancelled)`);
   }
 
+  const { actor, actorType, note } = resolveActor(opts);
   const project = await container.setProjectStatus.execute({
     id: ProjectId.from(idRaw),
     to: statusRaw as ProjectStatus,
-    actor: resolveAuthor(),
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
   });
 
   getFormatter(opts.json ?? false).emit({

@@ -10,6 +10,7 @@ type CreateMilestoneInput = Omit<CreateMilestoneParams, "id"> & {
   author: string;
   actor?: string;
   actorType?: "human" | "agent";
+  note?: string;
 };
 
 export class CreateMilestoneUseCase implements UseCase<CreateMilestoneInput, Milestone> {
@@ -33,6 +34,7 @@ export class CreateMilestoneUseCase implements UseCase<CreateMilestoneInput, Mil
       actorType: input.actorType ?? "human",
       event: "milestone_created",
       ref: id.toString(),
+      body: input.note,
     });
 
     return milestone;

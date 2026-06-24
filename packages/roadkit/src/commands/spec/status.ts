@@ -2,7 +2,7 @@ import { SpecId, type SpecStatus } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { fail, resolveAuthor, serializeSpec } from "../shared.js";
+import { type ActorOptions, fail, resolveActor, serializeSpec } from "../shared.js";
 
 const SPEC_STATUSES: ReadonlySet<string> = new Set([
   "draft",
@@ -13,7 +13,7 @@ const SPEC_STATUSES: ReadonlySet<string> = new Set([
   "abandoned",
 ]);
 
-interface StatusOptions {
+interface StatusOptions extends ActorOptions {
   json?: boolean;
 }
 
@@ -30,10 +30,13 @@ export async function runSpecStatus(
     );
   }
 
+  const { actor, actorType, note } = resolveActor(opts);
   const spec = await container.setSpecStatus.execute({
     id: SpecId.from(idRaw),
     to: statusRaw as SpecStatus,
-    actor: resolveAuthor(),
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
   });
 
   getFormatter(opts.json ?? false).emit({
