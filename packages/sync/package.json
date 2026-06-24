@@ -1,8 +1,8 @@
 {
   "name": "@roadkit/sync",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "roadkit sync adapters \u2014 Linear, GitHub",
+  "description": "roadkit sync adapters — Linear, GitHub",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",

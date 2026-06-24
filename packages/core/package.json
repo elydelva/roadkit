@@ -1,8 +1,8 @@
 {
   "name": "@roadkit/core",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "roadkit domain \u2014 entities, ports, use cases",
+  "description": "roadkit domain — entities, ports, use cases",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",

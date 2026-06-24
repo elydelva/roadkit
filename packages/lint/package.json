@@ -1,8 +1,8 @@
 {
   "name": "@roadkit/lint",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "roadkit lint engine \u2014 realm validation rules",
+  "description": "roadkit lint engine — realm validation rules",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
