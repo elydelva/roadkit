@@ -194,6 +194,37 @@ describe("FsRealmRepository", () => {
       expect(found?.assignee).toBeNull();
       expect(found?.branch).toBeNull();
     });
+
+    it("renames the file when the title changes, leaving no stale duplicate", async () => {
+      const issue = Issue.create({
+        id: IssueId.from("ISSUE-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "Old title",
+        author: "carol",
+      });
+      await repo.saveIssue(issue);
+      await repo.saveIssue({ ...issue, title: "New title" });
+
+      const issuesDir = path.join(tempDir, ROADKIT_DIR, "projects", "PROJ-0001-one", "issues");
+      const files = await fs.readdir(issuesDir);
+      expect(files).toEqual(["ISSUE-0001-new-title.md"]);
+      expect((await repo.findIssue(issue.id))?.title).toBe("New title");
+    });
+
+    it("deleteIssue removes every file claiming the id", async () => {
+      const issue = Issue.create({
+        id: IssueId.from("ISSUE-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "Doomed",
+        author: "carol",
+      });
+      await repo.saveIssue(issue);
+      await repo.deleteIssue(issue.id);
+
+      const issuesDir = path.join(tempDir, ROADKIT_DIR, "projects", "PROJ-0001-one", "issues");
+      expect(await fs.readdir(issuesDir)).toEqual([]);
+      expect(await repo.findIssue(issue.id)).toBeNull();
+    });
   });
 
   describe("Spec CRUD", () => {

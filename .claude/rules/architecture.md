@@ -37,7 +37,7 @@ The domain is **project-rooted**: a `Project` owns `Milestone`s, `Issue`s and `S
 **Use cases** (`packages/core/src/use-cases/`): `CreateProjectUseCase`, `CreateMilestoneUseCase`, `CreateIssueUseCase`, `CreateSpecUseCase`, `StartIssueUseCase`, `CompleteIssueUseCase`, `SetProjectStatusUseCase`, `SetMilestoneStatusUseCase`, `SetSpecStatusUseCase`, `GetNextUseCase`, `GetContextUseCase`, `GetHistoryUseCase`, `GetBriefUseCase`.
 
 **Ports** (`packages/core/src/ports/`):
-- `IRealmRepository` — project/milestone/issue/spec CRUD (`saveProject`, `findMilestonesForProject`, `saveMilestone`, `findIssuesForProject`, `saveIssue`, `findSpecsForProject`, `saveSpec`), trace append (`appendTrace`), plus ID counters.
+- `IRealmRepository` — project/milestone/issue/spec CRUD (`saveProject`, `findMilestonesForProject`, `saveMilestone`, `findIssuesForProject`, `saveIssue`, `deleteIssue`, `findSpecsForProject`, `saveSpec`), trace append (`appendTrace`), plus ID counters. Saves are slug-stable: a title change renames the entity file and removes any stale-slug sibling claiming the same id (so duplicate-id files can't accumulate).
 - `IGitAdapter` — `stage`, `isRepo`.
 
 ## File layout on disk
@@ -57,15 +57,21 @@ roadfig.yml                                                # RealmConfig at repo
 ```
 rkit init
 rkit project new | list | status <id> <status> | start <id>
-rkit milestone new | status <id> <status> | start <id>
-rkit issue add | start <id> | complete <id>
-rkit spec new | status <id> <status>
+rkit milestone new | list | status <id> <status> | start <id>
+rkit issue add | start <id> | complete <id> | status <id> <status>
+rkit issue edit <id> | retitle <id> | show <id> | list | rm <id>
+rkit issue gate add <id> <gate> | gate rm <id> <gate>
+rkit spec new | list | show <id> | status <id> <status>
 rkit next
 rkit context
 rkit history
 rkit brief    | --issue <id> · --project <id> · --json
 rkit lint     | --json (exit 1 on any error)
+rkit doctor   | --fix (repair duplicate-id files)
+rkit config get [key] | set <key> <value>
 ```
+
+`issue edit` patches fields (`--title` renames the file, `--priority`, `--estimate`, `--milestone`, `--assignee`, `--branch`, `--parent`, `--labels`, `--gates`); clear a nullable field with `--no-<field>` (e.g. `--no-assignee`). `issue status` is the generic transition (block/skip/abandon/unblock); → `completed` still enforces gates. `issue list` filters by `--project/--status/--assignee/--milestone/--label/--branch/--priority`. `config set` is limited to `priority.default`, `estimation.scale`, `estimation.default`.
 
 All mutation commands accept `--json` (returns the created/updated entity), plus `--actor` / `--actor-type <human|agent>` / `--message` for trace attribution (env: `ROADKIT_ACTOR`, `ROADKIT_ACTOR_TYPE`). Under `--json`, errors print `{"error":{"code","message"}}` on stderr and exit non-zero. `@roadkit/fs` exposes `scanRealmRaw` (strict frontmatter scan + diagnostics) consumed by `@roadkit/lint`; the `roadkit` CLI wires the two. The lint scan contract (`RealmScan`, `RawEntityRecord`) lives in `@roadkit/core`.
 

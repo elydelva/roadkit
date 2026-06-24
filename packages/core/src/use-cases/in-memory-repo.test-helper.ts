@@ -36,6 +36,9 @@ export function makeInMemoryRepo(): IRealmRepository {
     saveIssue: async (i) => {
       issues.set(i.id.toString(), i);
     },
+    deleteIssue: async (id) => {
+      issues.delete(id.toString());
+    },
 
     findSpec: async (id) => specs.get(id.toString()) ?? null,
     findSpecsForProject: async (projectId) =>

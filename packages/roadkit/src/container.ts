@@ -4,12 +4,15 @@ import {
   CreateMilestoneUseCase,
   CreateProjectUseCase,
   CreateSpecUseCase,
+  DeleteIssueUseCase,
+  EditIssueUseCase,
   GetBriefUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
   GetNextUseCase,
   type IRealmRepository,
   type RealmConfig,
+  SetIssueStatusUseCase,
   SetMilestoneStatusUseCase,
   SetProjectStatusUseCase,
   SetSpecStatusUseCase,
@@ -27,6 +30,9 @@ export interface Container {
   createIssue: CreateIssueUseCase;
   startIssue: StartIssueUseCase;
   completeIssue: CompleteIssueUseCase;
+  editIssue: EditIssueUseCase;
+  setIssueStatus: SetIssueStatusUseCase;
+  deleteIssue: DeleteIssueUseCase;
   createSpec: CreateSpecUseCase;
   setSpecStatus: SetSpecStatusUseCase;
   setProjectStatus: SetProjectStatusUseCase;
@@ -55,6 +61,9 @@ export async function createContainer(realmRoot: string): Promise<Container> {
     createIssue: new CreateIssueUseCase(repo),
     startIssue: new StartIssueUseCase(repo),
     completeIssue: new CompleteIssueUseCase(repo),
+    editIssue: new EditIssueUseCase(repo),
+    setIssueStatus: new SetIssueStatusUseCase(repo),
+    deleteIssue: new DeleteIssueUseCase(repo),
     createSpec: new CreateSpecUseCase(repo),
     setSpecStatus: new SetSpecStatusUseCase(repo),
     setProjectStatus: new SetProjectStatusUseCase(repo),
