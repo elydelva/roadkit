@@ -52,6 +52,7 @@ parentId: ~
 gates: []
 rules: []
 assignee: ~
+branch: ~
 author: "{{author}}"
 ---
 

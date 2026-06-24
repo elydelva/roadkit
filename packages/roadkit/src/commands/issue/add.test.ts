@@ -96,6 +96,24 @@ describe("runIssueAdd", () => {
     expect(issues[0]?.priority).toBe("P2");
   });
 
+  it("stores --assignee and --branch on the issue", async () => {
+    const container = makeContainer(tempDir, DEFAULT_CONFIG);
+    await seedProject(container);
+
+    const restore = silenceLog();
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "A",
+      assignee: "dave",
+      branch: "feat/a",
+    });
+    restore();
+
+    const issues = await container.repo.findIssuesForProject(ProjectId.from("PROJ-0001"));
+    expect(issues[0]?.assignee).toBe("dave");
+    expect(issues[0]?.branch).toBe("feat/a");
+  });
+
   it("resolves --estimate label to stored points", async () => {
     const config: RealmConfig = {
       ...DEFAULT_CONFIG,

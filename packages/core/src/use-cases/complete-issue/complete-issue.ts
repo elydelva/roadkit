@@ -11,6 +11,8 @@ interface CompleteIssueInput {
   actor: string;
   actorType?: "human" | "agent";
   note?: string;
+  assignee?: string;
+  branch?: string;
 }
 
 export class CompleteIssueUseCase implements UseCase<CompleteIssueInput, Issue> {
@@ -38,6 +40,8 @@ export class CompleteIssueUseCase implements UseCase<CompleteIssueInput, Issue> 
       status: "completed",
       completedAt: now,
       updatedAt: now,
+      ...(input.assignee !== undefined ? { assignee: input.assignee } : {}),
+      ...(input.branch !== undefined ? { branch: input.branch } : {}),
     };
     await this.repo.saveIssue(updated);
 

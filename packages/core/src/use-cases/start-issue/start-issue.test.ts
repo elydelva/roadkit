@@ -47,4 +47,32 @@ describe("StartIssueUseCase", () => {
     expect(traces[0]?.event).toBe("issue_started");
     expect(traces[0]?.to).toBe("in-progress");
   });
+
+  it("sets assignee and branch when provided", async () => {
+    const issue = Issue.create({ id: IssueId.generate(1), projectId, title: "I", author: "a" });
+    await repo.saveIssue(issue);
+    const updated = await useCase.execute({
+      id: issue.id,
+      actor: "alice",
+      assignee: "bob",
+      branch: "feat/x",
+    });
+    expect(updated.assignee).toBe("bob");
+    expect(updated.branch).toBe("feat/x");
+  });
+
+  it("leaves assignee and branch untouched when omitted", async () => {
+    const issue = Issue.create({
+      id: IssueId.generate(1),
+      projectId,
+      title: "I",
+      author: "a",
+      assignee: "bob",
+      branch: "feat/x",
+    });
+    await repo.saveIssue(issue);
+    const updated = await useCase.execute({ id: issue.id, actor: "alice" });
+    expect(updated.assignee).toBe("bob");
+    expect(updated.branch).toBe("feat/x");
+  });
 });

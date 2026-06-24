@@ -166,6 +166,34 @@ describe("FsRealmRepository", () => {
       expect(await repo.findIssuesForProject(ProjectId.from("PROJ-0001"))).toHaveLength(1);
       expect(await repo.findAllIssues()).toHaveLength(2);
     });
+
+    it("round-trips assignee and branch through frontmatter", async () => {
+      const issue = Issue.create({
+        id: IssueId.from("ISSUE-0001"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "Build it",
+        author: "carol",
+        assignee: "dave",
+        branch: "feat/build-it",
+      });
+      await repo.saveIssue(issue);
+      const found = await repo.findIssue(issue.id);
+      expect(found?.assignee).toBe("dave");
+      expect(found?.branch).toBe("feat/build-it");
+    });
+
+    it("defaults assignee and branch to null when absent", async () => {
+      const issue = Issue.create({
+        id: IssueId.from("ISSUE-0002"),
+        projectId: ProjectId.from("PROJ-0001"),
+        title: "No meta",
+        author: "carol",
+      });
+      await repo.saveIssue(issue);
+      const found = await repo.findIssue(issue.id);
+      expect(found?.assignee).toBeNull();
+      expect(found?.branch).toBeNull();
+    });
   });
 
   describe("Spec CRUD", () => {

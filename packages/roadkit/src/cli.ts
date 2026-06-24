@@ -151,6 +151,7 @@ export function buildCLI(): Command {
     .option("--parent <id>", "Parent issue id")
     .option("--gates <ids>", "Comma-separated gate ids")
     .option("--assignee <assignee>", "Assignee")
+    .option("--branch <name>", "Git branch where this issue is implemented")
     .option("--body <body>", "Issue body")
     .option("--json", "Machine-readable output")
     .option("--actor <name>", "Acting actor (overrides env)")
@@ -167,6 +168,7 @@ export function buildCLI(): Command {
         parent?: string;
         gates?: string;
         assignee?: string;
+        branch?: string;
         body?: string;
         json?: boolean;
       }) => {
@@ -177,24 +179,32 @@ export function buildCLI(): Command {
   issue
     .command("start <issueId>")
     .description("Mark an issue as in-progress")
+    .option("--assignee <assignee>", "Assignee")
+    .option("--branch <name>", "Git branch where this issue is implemented")
     .option("--json", "Machine-readable output")
     .option("--actor <name>", "Acting actor (overrides env)")
     .option("--actor-type <type>", "Actor type: human|agent")
     .option("--message <text>", "Trace note explaining the change")
-    .action(async (issueId: string, opts: { json?: boolean }) => {
-      await runIssueStart(await createContainer(getRealmRoot()), issueId, opts);
-    });
+    .action(
+      async (issueId: string, opts: { json?: boolean; assignee?: string; branch?: string }) => {
+        await runIssueStart(await createContainer(getRealmRoot()), issueId, opts);
+      }
+    );
 
   issue
     .command("complete <issueId>")
     .description("Mark an issue as completed")
+    .option("--assignee <assignee>", "Assignee")
+    .option("--branch <name>", "Git branch where this issue is implemented")
     .option("--json", "Machine-readable output")
     .option("--actor <name>", "Acting actor (overrides env)")
     .option("--actor-type <type>", "Actor type: human|agent")
     .option("--message <text>", "Trace note explaining the change")
-    .action(async (issueId: string, opts: { json?: boolean }) => {
-      await runIssueComplete(await createContainer(getRealmRoot()), issueId, opts);
-    });
+    .action(
+      async (issueId: string, opts: { json?: boolean; assignee?: string; branch?: string }) => {
+        await runIssueComplete(await createContainer(getRealmRoot()), issueId, opts);
+      }
+    );
 
   // --- spec ---
   const spec = program.command("spec").description("Manage specs");

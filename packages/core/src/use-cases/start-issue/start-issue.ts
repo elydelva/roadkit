@@ -11,6 +11,8 @@ interface StartIssueInput {
   actor: string;
   actorType?: "human" | "agent";
   note?: string;
+  assignee?: string;
+  branch?: string;
 }
 
 export class StartIssueUseCase implements UseCase<StartIssueInput, Issue> {
@@ -32,6 +34,8 @@ export class StartIssueUseCase implements UseCase<StartIssueInput, Issue> {
       status: "in-progress",
       startedAt: now,
       updatedAt: now,
+      ...(input.assignee !== undefined ? { assignee: input.assignee } : {}),
+      ...(input.branch !== undefined ? { branch: input.branch } : {}),
     };
     await this.repo.saveIssue(updated);
 

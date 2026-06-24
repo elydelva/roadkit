@@ -108,6 +108,7 @@ export function serializeIssue(i: Issue): Record<string, unknown> {
     gates: i.gates.map((g) => (typeof g === "string" ? g : g.toString())),
     rules: i.rules,
     assignee: i.assignee,
+    branch: i.branch,
     author: i.author,
     startedAt: i.startedAt ? i.startedAt.toISOString() : null,
     completedAt: i.completedAt ? i.completedAt.toISOString() : null,
