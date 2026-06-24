@@ -115,6 +115,29 @@ describe("roadkit CLI commands", () => {
 
     const templates = await fs.readdir(path.join(tempDir, ROADKIT_DIR, "templates"));
     expect(templates.sort()).toEqual(["issue.md", "milestone.md", "project.md", "spec.md"]);
+
+    const agents = await fs.readFile(path.join(tempDir, "AGENTS.md"), "utf-8");
+    expect(agents).toContain("rkit brief");
+    expect(agents).toContain("ROADKIT_ACTOR");
+  });
+
+  it("installs a pre-commit hook in a git repo without clobbering an existing one", async () => {
+    // Fresh git repo: hook is installed.
+    await fs.mkdir(path.join(tempDir, ".git", "hooks"), { recursive: true });
+    let cap = captureLog();
+    await runInit(tempDir);
+    cap.restore();
+    const hook = await fs.readFile(path.join(tempDir, ".git", "hooks", "pre-commit"), "utf-8");
+    expect(hook).toContain("rkit lint");
+
+    // Existing hook is preserved; AGENTS.md is not regenerated.
+    await fs.writeFile(path.join(tempDir, ".git", "hooks", "pre-commit"), "#!/bin/sh\necho mine\n");
+    cap = captureLog();
+    await runInit(tempDir);
+    cap.restore();
+    expect(cap.lines.join("\n")).toContain("AGENTS.md already exists");
+    const preserved = await fs.readFile(path.join(tempDir, ".git", "hooks", "pre-commit"), "utf-8");
+    expect(preserved).toContain("echo mine");
   });
 
   it("runs the full project lifecycle end to end", async () => {

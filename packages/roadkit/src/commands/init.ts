@@ -90,6 +90,49 @@ const TEMPLATES: Array<[string, string]> = [
   ["spec", SPEC_TEMPLATE],
 ];
 
+const AGENTS_MD = `# Agent guide — roadkit (\`rkit\`)
+
+roadkit is a local, git-versioned planning layer. Read the brief before you act,
+work, then mark progress. State lives in \`.roadkit/\`; config in \`roadfig.yml\`.
+
+## Identify yourself
+
+Set these once so traces attribute you correctly:
+
+\`\`\`sh
+export ROADKIT_ACTOR="agent:claude"
+export ROADKIT_ACTOR_TYPE="agent"
+\`\`\`
+
+## Loop
+
+\`\`\`sh
+rkit brief --json              # focus issue + rules + dependencies + next
+rkit issue start ISSUE-XXXX    # rules are recorded as acknowledged
+# ...do the work, honouring the rules in the brief...
+rkit issue complete ISSUE-XXXX --message "what changed"
+\`\`\`
+
+## Machine output
+
+Every mutation accepts \`--json\` and returns the created/updated entity, so you
+can chain calls. Reads (\`brief\`, \`next\`, \`context\`, \`history\`, \`project list\`)
+accept \`--json\` too. On failure, \`--json\` prints \`{"error":{"code","message"}}\`
+on stderr and exits non-zero.
+
+## Rules vs lint
+
+- **Rules** (frontmatter \`rules:\` with triggers like \`before_edit\`) are
+  constraints for YOU to honour — \`rkit brief\` surfaces them grouped by trigger.
+- **\`rkit lint\`** checks realm *structure* (ids, references, gate cycles, config),
+  not rule triggers. It runs on pre-commit and blocks the commit on errors.
+`;
+
+const PRE_COMMIT_HOOK = `#!/bin/sh
+# Installed by 'rkit init' — blocks commits that break realm integrity.
+rkit lint
+`;
+
 async function exists(p: string): Promise<boolean> {
   try {
     await fs.access(p);
@@ -129,6 +172,9 @@ export async function runInit(realmRoot: string): Promise<void> {
     await writeRealmConfig(realmRoot, DEFAULT_CONFIG);
   }
 
+  await writeAgentsGuide(realmRoot);
+  await installPreCommitHook(realmRoot);
+
   console.log(`✓ Initialized ${ROADKIT_DIR}/`);
   console.log(`  ${ROADKIT_DIR}/${STATE_FILE}`);
   for (const [name] of TEMPLATES) {
@@ -137,4 +183,33 @@ export async function runInit(realmRoot: string): Promise<void> {
   console.log(`  ${CONFIG_FILE}`);
   console.log("");
   console.log('Next: rkit project new --title "My first project"');
+}
+
+/** Scaffold the agent guide at the realm root, never overwriting an existing one. */
+async function writeAgentsGuide(realmRoot: string): Promise<void> {
+  const file = path.join(realmRoot, "AGENTS.md");
+  if (await exists(file)) {
+    console.log("✓ AGENTS.md already exists, skipping");
+    return;
+  }
+  await fs.writeFile(file, AGENTS_MD, "utf-8");
+  console.log("  AGENTS.md");
+}
+
+/**
+ * Install a pre-commit hook running `rkit lint`, but only when this is a git
+ * repo with no existing hook — never clobber a hook the user already wrote.
+ */
+async function installPreCommitHook(realmRoot: string): Promise<void> {
+  const hooksDir = path.join(realmRoot, ".git", "hooks");
+  if (!(await exists(path.join(realmRoot, ".git")))) return;
+
+  const hookFile = path.join(hooksDir, "pre-commit");
+  if (await exists(hookFile)) {
+    console.log("• pre-commit hook exists — add `rkit lint` to enforce realm integrity");
+    return;
+  }
+  await fs.mkdir(hooksDir, { recursive: true });
+  await fs.writeFile(hookFile, PRE_COMMIT_HOOK, { mode: 0o755 });
+  console.log("  .git/hooks/pre-commit (rkit lint)");
 }
