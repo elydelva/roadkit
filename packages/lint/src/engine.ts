@@ -37,8 +37,9 @@ function gateIssueId(gate: string): string {
 
 /**
  * Validates realm structural integrity from a raw scan: well-formed frontmatter,
- * ids matching filenames, valid statuses, resolvable references, no dependency
- * cycles, and config-conformant priority/labels. It does NOT enforce rule
+ * ids matching filenames, unique ids (no two files claiming one id), valid
+ * statuses, resolvable references, no dependency cycles, and config-conformant
+ * priority/labels. It does NOT enforce rule
  * triggers (before_edit, …) — those are agent-prompt constraints surfaced by
  * `rkit brief`, not file-validatable here.
  */
@@ -72,6 +73,7 @@ export class LintEngine {
       this.checkRecord(record, knownIds, findings);
     }
 
+    this.checkDuplicateIds(scan.records, findings);
     this.checkCycles(scan.records, findings);
 
     const errorCount = findings.filter((f) => f.severity === "error").length;
@@ -161,6 +163,39 @@ export class LintEngine {
     for (const label of asStringArray(value)) {
       if (!allowed.has(label)) {
         add("warning", "labels-valid", `Label not in taxonomy: ${label}`);
+      }
+    }
+  }
+
+  /**
+   * Flag any id claimed by more than one file. This catches stale duplicates
+   * left behind when a title is renamed by copying to a new slug instead of
+   * renaming the file: two `.md` files share one `id:`, the loader resolves
+   * non-deterministically, and a transition run against the stale copy fails
+   * with a confusing "invalid transition" error. Every file involved is
+   * reported so the operator can delete the stale one.
+   */
+  private checkDuplicateIds(records: RawEntityRecord[], findings: LintFinding[]): void {
+    const filesById = new Map<string, string[]>();
+    for (const record of records) {
+      const id = asString(record.data.id);
+      if (!id) continue;
+      const files = filesById.get(id);
+      if (files) files.push(record.file);
+      else filesById.set(id, [record.file]);
+    }
+
+    for (const [id, files] of filesById) {
+      if (files.length < 2) continue;
+      const others = files.join(", ");
+      for (const file of files) {
+        findings.push({
+          severity: "error",
+          code: "unique-ids",
+          file,
+          entityId: id,
+          message: `Id ${id} is claimed by ${files.length} files: ${others}`,
+        });
       }
     }
   }
