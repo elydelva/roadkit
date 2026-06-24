@@ -1,0 +1,96 @@
+import { type Brief, IssueId, ProjectId } from "@roadkit/core";
+import type { Container } from "../container.js";
+import { setJsonMode } from "./json-mode.js";
+import { getFormatter } from "./output.js";
+import { formatEstimate, serializeBrief } from "./shared.js";
+
+interface BriefOptions {
+  issue?: string;
+  project?: string;
+  json?: boolean;
+}
+
+export async function runBrief(container: Container, opts: BriefOptions): Promise<void> {
+  setJsonMode(opts.json ?? false);
+
+  const filter: { issueId?: IssueId; projectId?: ProjectId } = {};
+  if (opts.issue) filter.issueId = IssueId.from(opts.issue);
+  if (opts.project) filter.projectId = ProjectId.from(opts.project);
+
+  const brief = await container.getBrief.execute(filter);
+
+  getFormatter(opts.json ?? false).emit({
+    json: serializeBrief(brief),
+    human: () => console.log(renderBrief(container, brief)),
+  });
+}
+
+/** Render a Markdown block ready to paste into an agent's system prompt. */
+function renderBrief(container: Container, brief: Brief): string {
+  const lines: string[] = ["# roadkit brief", ""];
+
+  if (!brief.issue) {
+    lines.push("No focus issue (nothing in progress or eligible).");
+    if (brief.next) {
+      lines.push("", `**Next:** ${nextLine(container, brief)}`);
+    }
+    return lines.join("\n");
+  }
+
+  const { issue, project, milestone } = brief;
+  const est = formatEstimate(container.config, issue.estimate);
+  const tag = est ? `${issue.priority} · ${est}` : issue.priority;
+  lines.push(
+    `## ${issue.id.toString()} — ${issue.title}`,
+    `Status: ${issue.status} · ${tag}`,
+    project ? `Project: ${project.id.toString()} — ${project.title}` : "",
+    milestone ? `Milestone: ${milestone.id.toString()} — ${milestone.title}` : ""
+  );
+
+  if (brief.blockedReason) {
+    lines.push("", `> ⚠ Blocked: ${brief.blockedReason}`);
+  }
+
+  if (brief.rules.length > 0) {
+    lines.push("", "## Rules");
+    for (const group of brief.rules) {
+      lines.push(`- **${group.trigger}**`);
+      for (const instruction of group.instructions) {
+        lines.push(`  - [ ] ${instruction}`);
+      }
+    }
+  }
+
+  if (brief.gatesOn.length > 0 || brief.unblocks.length > 0) {
+    lines.push("", "## Dependencies");
+    for (const gate of brief.gatesOn) {
+      lines.push(`- Gates on ${gate.gate} (${gate.status})`);
+    }
+    if (brief.unblocks.length > 0) {
+      lines.push(`- Unblocks: ${brief.unblocks.map((i) => i.id.toString()).join(", ")}`);
+    }
+  }
+
+  lines.push("", "## Next", brief.next ? nextLine(container, brief) : "Nothing else eligible.");
+
+  if (brief.recentTraces.length > 0) {
+    lines.push("", "## Recent");
+    for (const t of brief.recentTraces) {
+      const at = t.at.toISOString().replace("T", " ").slice(0, 19);
+      lines.push(`- ${at}  ${t.event}  ${t.actor}`);
+    }
+  }
+
+  return lines.filter((l, i) => l !== "" || lines[i - 1] !== "").join("\n");
+}
+
+function nextLine(container: Container, brief: Brief): string {
+  if (!brief.next) return "Nothing else eligible.";
+  const { issue, project, milestone } = brief.next;
+  const scope = milestone
+    ? `${project.id.toString()} / ${milestone.id.toString()}`
+    : project.id.toString();
+  const est = formatEstimate(container.config, issue.estimate);
+  const tag = est ? `${issue.priority} · ${est}` : issue.priority;
+  return `→ ${issue.id.toString()}  ${issue.title}  [${tag}]  (${scope})`;
+}

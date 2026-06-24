@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { runBrief } from "./commands/brief.js";
 import { runContext } from "./commands/context.js";
 import { runHistory } from "./commands/history.js";
 import { runInit } from "./commands/init.js";
@@ -238,6 +239,16 @@ export function buildCLI(): Command {
     .option("--json", "Machine-readable output")
     .action(async (opts: { json?: boolean }) => {
       await runNext(await createContainer(getRealmRoot()), opts);
+    });
+
+  program
+    .command("brief")
+    .description("Inject-ready brief: focus issue, rules, dependencies, next")
+    .option("--issue <id>", "Focus on a specific issue (e.g. ISSUE-0001)")
+    .option("--project <id>", "Scope to a specific project")
+    .option("--json", "Machine-readable output")
+    .action(async (opts: { issue?: string; project?: string; json?: boolean }) => {
+      await runBrief(await createContainer(getRealmRoot()), opts);
     });
 
   program
