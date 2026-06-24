@@ -60,6 +60,9 @@ export {
   CreateIssueUseCase,
   StartIssueUseCase,
   CompleteIssueUseCase,
+  EditIssueUseCase,
+  SetIssueStatusUseCase,
+  DeleteIssueUseCase,
   CreateSpecUseCase,
   SetSpecStatusUseCase,
   SetProjectStatusUseCase,
@@ -70,6 +73,7 @@ export {
   GetBriefUseCase,
 } from "./use-cases/index.js";
 export type {
+  EditIssuePatch,
   NextResult,
   ContextFilter,
   RealmContext,
