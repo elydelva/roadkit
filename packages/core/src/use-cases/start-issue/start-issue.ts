@@ -46,6 +46,19 @@ export class StartIssueUseCase implements UseCase<StartIssueInput, Issue> {
       body: input.note,
     });
 
+    // Record that the actor was surfaced the issue's rules when starting work,
+    // so the audit trail shows the constraints were acknowledged (not enforced).
+    if (issue.rules.length > 0) {
+      await recordTrace(this.repo, {
+        projectId: issue.projectId,
+        issueId: issue.id,
+        actor: input.actor,
+        actorType: input.actorType ?? "human",
+        event: "rules_acknowledged",
+        body: `${issue.rules.length} rule(s) in effect`,
+      });
+    }
+
     return updated;
   }
 }

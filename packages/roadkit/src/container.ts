@@ -4,6 +4,7 @@ import {
   CreateMilestoneUseCase,
   CreateProjectUseCase,
   CreateSpecUseCase,
+  GetBriefUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
   GetNextUseCase,
@@ -33,6 +34,7 @@ export interface Container {
   getNext: GetNextUseCase;
   getContext: GetContextUseCase;
   getHistory: GetHistoryUseCase;
+  getBrief: GetBriefUseCase;
 }
 
 export async function createContainer(realmRoot: string): Promise<Container> {
@@ -60,5 +62,6 @@ export async function createContainer(realmRoot: string): Promise<Container> {
     getNext: new GetNextUseCase(repo, config),
     getContext: new GetContextUseCase(repo),
     getHistory: new GetHistoryUseCase(repo),
+    getBrief: new GetBriefUseCase(repo, config),
   };
 }

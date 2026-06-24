@@ -9,6 +9,7 @@ import {
   CreateProjectUseCase,
   CreateSpecUseCase,
   DEFAULT_CONFIG,
+  GetBriefUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
   GetNextUseCase,
@@ -20,6 +21,7 @@ import {
 } from "@roadkit/core";
 import { FsRealmRepository, ROADKIT_DIR } from "@roadkit/fs";
 import type { Container } from "../container.js";
+import { runBrief } from "./brief.js";
 import { runContext } from "./context.js";
 import { runHistory } from "./history.js";
 import { runInit } from "./init.js";
@@ -59,6 +61,7 @@ function testContainer(realmRoot: string): Container {
     getNext: new GetNextUseCase(repo),
     getContext: new GetContextUseCase(repo),
     getHistory: new GetHistoryUseCase(repo),
+    getBrief: new GetBriefUseCase(repo),
   };
 }
 
@@ -430,6 +433,67 @@ describe("roadkit CLI commands", () => {
     await runSpecStatus(container, "SPEC-0001", "proposed", { json: true });
     specStatusCap.restore();
     expect(JSON.parse(specStatusCap.lines.join("\n")).status).toBe("proposed");
+  });
+
+  it("brief renders an injectable block and JSON with rules and blockers", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runProjectStart(container, "PROJ-0001");
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "Blocker",
+      priority: "high",
+    });
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "Dependent",
+      priority: "high",
+      gates: "ISSUE-0001",
+    });
+
+    const jsonCap = captureLog();
+    await runBrief(container, { issue: "ISSUE-0002", json: true });
+    jsonCap.restore();
+    const brief = JSON.parse(jsonCap.lines.join("\n"));
+    expect(brief.issue.id).toBe("ISSUE-0002");
+    expect(brief.gatesOn).toEqual([{ gate: "ISSUE-0001", status: "not-started" }]);
+    expect(brief.blockedReason).toContain("ISSUE-0001");
+
+    const humanCap = captureLog();
+    await runBrief(container, { issue: "ISSUE-0001" });
+    humanCap.restore();
+    const out = humanCap.lines.join("\n");
+    expect(out).toContain("ISSUE-0001");
+    expect(out).toContain("Unblocks: ISSUE-0002");
+
+    // Missing focus id, but an eligible issue exists → "no focus" + Next line.
+    const missCap = captureLog();
+    await runBrief(container, { issue: "ISSUE-9999" });
+    missCap.restore();
+    const miss = missCap.lines.join("\n");
+    expect(miss).toContain("No focus issue");
+    expect(miss).toContain("Next:");
+  });
+
+  it("records rules_acknowledged when starting an issue that has rules", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    // Issue with a rule, created via the use case directly to attach rules.
+    await container.createIssue.execute({
+      projectId: ProjectId.from("PROJ-0001"),
+      title: "Guarded",
+      author: "a",
+      rules: [{ trigger: "before_complete", instruction: "run tests" }],
+    });
+    await runIssueStart(container, "ISSUE-0001");
+
+    const cap = captureLog();
+    await runHistory(container, { json: true });
+    cap.restore();
+    const events = JSON.parse(cap.lines.join("\n")).map((t: { event: string }) => t.event);
+    expect(events).toContain("rules_acknowledged");
   });
 
   it("attributes agent actor, type, and message to traces", async () => {

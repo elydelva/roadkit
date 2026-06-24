@@ -1,4 +1,13 @@
-import type { Issue, Milestone, Project, RealmContext, Spec, Trace } from "@roadkit/core";
+import type {
+  Brief,
+  Issue,
+  Milestone,
+  NextResult,
+  Project,
+  RealmContext,
+  Spec,
+  Trace,
+} from "@roadkit/core";
 import { formatJsonError, isJsonMode } from "./json-mode.js";
 
 export { formatEstimate } from "@roadkit/core";
@@ -150,5 +159,27 @@ export function serializeContext(ctx: RealmContext): Record<string, unknown> {
     issues: ctx.issues.map(serializeIssue),
     specs: ctx.specs.map(serializeSpec),
     traces: ctx.traces.map(serializeTrace),
+  };
+}
+
+function serializeNext(next: NextResult): Record<string, unknown> {
+  return {
+    issue: serializeIssue(next.issue),
+    project: serializeProject(next.project),
+    milestone: next.milestone ? serializeMilestone(next.milestone) : null,
+  };
+}
+
+export function serializeBrief(brief: Brief): Record<string, unknown> {
+  return {
+    issue: brief.issue ? serializeIssue(brief.issue) : null,
+    project: brief.project ? serializeProject(brief.project) : null,
+    milestone: brief.milestone ? serializeMilestone(brief.milestone) : null,
+    rules: brief.rules,
+    gatesOn: brief.gatesOn,
+    unblocks: brief.unblocks.map((i) => i.id.toString()),
+    blockedReason: brief.blockedReason,
+    next: brief.next ? serializeNext(brief.next) : null,
+    recentTraces: brief.recentTraces.map(serializeTrace),
   };
 }

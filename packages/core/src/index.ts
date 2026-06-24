@@ -64,8 +64,18 @@ export {
   GetNextUseCase,
   GetContextUseCase,
   GetHistoryUseCase,
+  GetBriefUseCase,
 } from "./use-cases/index.js";
-export type { NextResult, ContextFilter, RealmContext, HistoryFilter } from "./use-cases/index.js";
+export type {
+  NextResult,
+  ContextFilter,
+  RealmContext,
+  HistoryFilter,
+  Brief,
+  BriefFilter,
+  BriefDependency,
+  BriefRuleGroup,
+} from "./use-cases/index.js";
 export type { UseCase, RecordTraceParams } from "./use-cases/index.js";
 export { recordTrace } from "./use-cases/index.js";
 
