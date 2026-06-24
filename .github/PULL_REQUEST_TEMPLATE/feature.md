@@ -17,6 +17,7 @@ Closes #<!-- issue number -->
 - [ ] Type check passes (`bun run typecheck`)
 - [ ] Lint passes (`bun run lint`)
 - [ ] No regressions in `rkit context` or `rkit next` output
+- [ ] Issue reaches `completed` within this PR (`.roadkit/` state included) — folded into the work commit or a separate one
 
 ## Review notes
 

@@ -110,8 +110,22 @@ export ROADKIT_ACTOR_TYPE="agent"
 rkit brief --json              # focus issue + rules + dependencies + next
 rkit issue start ISSUE-XXXX    # rules are recorded as acknowledged
 # ...do the work, honouring the rules in the brief...
-rkit issue complete ISSUE-XXXX --message "what changed"
 \`\`\`
+
+## Completing an issue
+
+Don't assume you should mark the issue completed — finishing the *work* is not the
+same as validating the *issue*. Run \`rkit issue complete ISSUE-XXXX --message "..."\`
+only when you've been asked or authorised to. It mutates \`.roadkit/\`.
+
+When you do complete, where the \`completed\` state lands depends on context:
+
+- **On \`main\`:** never make a standalone commit just to record completion. Fold the
+  \`complete\` mutation into the work commit — run \`complete\` *before* you commit, so
+  code and \`.roadkit/\` state land together.
+- **On a branch / PR:** no strong opinion. Either fold \`completed\` into the final
+  commit, or add a separate completion commit — both are fine, as long as the issue
+  reaches \`completed\` within the same PR that ships its code.
 
 ## Machine output
 
