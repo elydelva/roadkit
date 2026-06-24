@@ -11,7 +11,7 @@ packages/
 ├── core/     @roadkit/core   — domain entities, ports, services, use cases
 ├── fs/       @roadkit/fs     — IRealmRepository impl (YAML frontmatter via gray-matter)
 ├── git/      @roadkit/git    — IGitAdapter impl (git staging via Bun.spawn)
-├── lint/     @roadkit/lint   — validation engine (stub in v0.1)
+├── lint/     @roadkit/lint   — realm integrity engine (LintEngine, core-only, pure)
 ├── tui/      @roadkit/tui    — terminal UI via React/Ink (stub in v0.1)
 ├── sync/     @roadkit/sync   — Linear/GitHub adapters (stub in v0.1)
 └── roadkit/  roadkit         — CLI entry point `rkit` + dependency injection
@@ -34,7 +34,7 @@ The domain is **project-rooted**: a `Project` owns `Milestone`s, `Issue`s and `S
 - `StateMachineService` — enforces valid status transitions.
 - `DAGService` — dependency graph, cycle detection, `next` sort ordering.
 
-**Use cases** (`packages/core/src/use-cases/`): `CreateProjectUseCase`, `CreateMilestoneUseCase`, `CreateIssueUseCase`, `CreateSpecUseCase`, `StartIssueUseCase`, `CompleteIssueUseCase`, `SetProjectStatusUseCase`, `SetMilestoneStatusUseCase`, `SetSpecStatusUseCase`, `GetNextUseCase`, `GetContextUseCase`, `GetHistoryUseCase`.
+**Use cases** (`packages/core/src/use-cases/`): `CreateProjectUseCase`, `CreateMilestoneUseCase`, `CreateIssueUseCase`, `CreateSpecUseCase`, `StartIssueUseCase`, `CompleteIssueUseCase`, `SetProjectStatusUseCase`, `SetMilestoneStatusUseCase`, `SetSpecStatusUseCase`, `GetNextUseCase`, `GetContextUseCase`, `GetHistoryUseCase`, `GetBriefUseCase`.
 
 **Ports** (`packages/core/src/ports/`):
 - `IRealmRepository` — project/milestone/issue/spec CRUD (`saveProject`, `findMilestonesForProject`, `saveMilestone`, `findIssuesForProject`, `saveIssue`, `findSpecsForProject`, `saveSpec`), trace append (`appendTrace`), plus ID counters.
@@ -63,7 +63,11 @@ rkit spec new | status <id> <status>
 rkit next
 rkit context
 rkit history
+rkit brief    | --issue <id> · --project <id> · --json
+rkit lint     | --json (exit 1 on any error)
 ```
+
+All mutation commands accept `--json` (returns the created/updated entity), plus `--actor` / `--actor-type <human|agent>` / `--message` for trace attribution (env: `ROADKIT_ACTOR`, `ROADKIT_ACTOR_TYPE`). Under `--json`, errors print `{"error":{"code","message"}}` on stderr and exit non-zero. `@roadkit/fs` exposes `scanRealmRaw` (strict frontmatter scan + diagnostics) consumed by `@roadkit/lint`; the `roadkit` CLI wires the two. The lint scan contract (`RealmScan`, `RawEntityRecord`) lives in `@roadkit/core`.
 
 ## Key domain concepts
 
