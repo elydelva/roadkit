@@ -11,6 +11,7 @@ interface SetMilestoneStatusInput {
   to: MilestoneStatus;
   actor: string;
   actorType?: "human" | "agent";
+  note?: string;
 }
 
 export class SetMilestoneStatusUseCase implements UseCase<SetMilestoneStatusInput, Milestone> {
@@ -42,6 +43,7 @@ export class SetMilestoneStatusUseCase implements UseCase<SetMilestoneStatusInpu
       ref: milestone.id.toString(),
       from: milestone.status,
       to: input.to,
+      body: input.note,
     });
 
     return updated;

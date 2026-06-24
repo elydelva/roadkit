@@ -1,10 +1,10 @@
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { parseList, resolveAuthor, serializeProject } from "../shared.js";
+import { type ActorOptions, parseList, resolveActor, serializeProject } from "../shared.js";
 import { requireOption } from "../validators.js";
 
-interface ProjectNewOptions {
+interface ProjectNewOptions extends ActorOptions {
   title?: string;
   leads?: string;
   body?: string;
@@ -15,10 +15,13 @@ export async function runProjectNew(container: Container, opts: ProjectNewOption
   setJsonMode(opts.json ?? false);
   const title = requireOption(opts.title, "--title");
 
-  const author = resolveAuthor();
+  const { actor, actorType, note } = resolveActor(opts);
   const project = await container.createProject.execute({
     title,
-    author,
+    author: actor,
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
     leads: parseList(opts.leads),
     body: opts.body ?? "",
   });

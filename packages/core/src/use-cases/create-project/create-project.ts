@@ -8,6 +8,7 @@ import type { UseCase } from "../use-case.js";
 type CreateProjectInput = Omit<CreateProjectParams, "id"> & {
   actor?: string;
   actorType?: "human" | "agent";
+  note?: string;
 };
 
 export class CreateProjectUseCase implements UseCase<CreateProjectInput, Project> {
@@ -25,6 +26,7 @@ export class CreateProjectUseCase implements UseCase<CreateProjectInput, Project
       actor: input.actor ?? input.author,
       actorType: input.actorType ?? "human",
       event: "project_created",
+      body: input.note,
     });
 
     return project;

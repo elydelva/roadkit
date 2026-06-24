@@ -10,6 +10,7 @@ interface StartIssueInput {
   id: IssueId;
   actor: string;
   actorType?: "human" | "agent";
+  note?: string;
 }
 
 export class StartIssueUseCase implements UseCase<StartIssueInput, Issue> {
@@ -42,6 +43,7 @@ export class StartIssueUseCase implements UseCase<StartIssueInput, Issue> {
       event: "issue_started",
       from: issue.status,
       to: "in-progress",
+      body: input.note,
     });
 
     return updated;

@@ -2,9 +2,9 @@ import { IssueId } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { resolveAuthor, serializeIssue } from "../shared.js";
+import { type ActorOptions, resolveActor, serializeIssue } from "../shared.js";
 
-interface IssueCompleteOptions {
+interface IssueCompleteOptions extends ActorOptions {
   json?: boolean;
 }
 
@@ -14,9 +14,12 @@ export async function runIssueComplete(
   opts: IssueCompleteOptions = {}
 ): Promise<void> {
   setJsonMode(opts.json ?? false);
+  const { actor, actorType, note } = resolveActor(opts);
   const issue = await container.completeIssue.execute({
     id: IssueId.from(idRaw),
-    actor: resolveAuthor(),
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
   });
   getFormatter(opts.json ?? false).emit({
     json: serializeIssue(issue),

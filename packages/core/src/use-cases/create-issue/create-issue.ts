@@ -9,6 +9,7 @@ import type { UseCase } from "../use-case.js";
 type CreateIssueInput = Omit<CreateIssueParams, "id"> & {
   actor?: string;
   actorType?: "human" | "agent";
+  note?: string;
 };
 
 export class CreateIssueUseCase implements UseCase<CreateIssueInput, Issue> {
@@ -39,6 +40,7 @@ export class CreateIssueUseCase implements UseCase<CreateIssueInput, Issue> {
       actor: input.actor ?? input.author,
       actorType: input.actorType ?? "human",
       event: "issue_created",
+      body: input.note,
     });
 
     return issue;

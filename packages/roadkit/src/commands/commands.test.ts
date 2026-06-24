@@ -432,6 +432,32 @@ describe("roadkit CLI commands", () => {
     expect(JSON.parse(specStatusCap.lines.join("\n")).status).toBe("proposed");
   });
 
+  it("attributes agent actor, type, and message to traces", async () => {
+    await runInit(tempDir);
+    const container = testContainer(tempDir);
+    await runProjectNew(container, { title: "Checkout revamp" });
+    await runIssueAdd(container, {
+      project: "PROJ-0001",
+      title: "Fix auth redirect",
+      priority: "high",
+    });
+    await runIssueStart(container, "ISSUE-0001");
+    await runIssueComplete(container, "ISSUE-0001", {
+      actor: "agent:claude",
+      actorType: "agent",
+      message: "rotation implemented",
+    });
+
+    const cap = captureLog();
+    await runHistory(container, { json: true });
+    cap.restore();
+    const traces = JSON.parse(cap.lines.join("\n"));
+    const completed = traces.find((t: { event: string }) => t.event === "issue_completed");
+    expect(completed.actor).toBe("agent:claude");
+    expect(completed.actorType).toBe("agent");
+    expect(completed.body).toBe("rotation implemented");
+  });
+
   it("emits a structured error envelope under --json and exits non-zero", async () => {
     await runInit(tempDir);
     const container = testContainer(tempDir);

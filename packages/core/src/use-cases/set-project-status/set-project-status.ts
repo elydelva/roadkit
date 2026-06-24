@@ -11,6 +11,7 @@ interface SetProjectStatusInput {
   to: ProjectStatus;
   actor: string;
   actorType?: "human" | "agent";
+  note?: string;
 }
 
 export class SetProjectStatusUseCase implements UseCase<SetProjectStatusInput, Project> {
@@ -41,6 +42,7 @@ export class SetProjectStatusUseCase implements UseCase<SetProjectStatusInput, P
       event: "project_status_changed",
       from: project.status,
       to: input.to,
+      body: input.note,
     });
 
     return updated;

@@ -2,11 +2,11 @@ import { MilestoneId, type MilestoneStatus } from "@roadkit/core";
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { fail, resolveAuthor, serializeMilestone } from "../shared.js";
+import { type ActorOptions, fail, resolveActor, serializeMilestone } from "../shared.js";
 
 const MILESTONE_STATUSES: ReadonlySet<string> = new Set(["pending", "active", "done"]);
 
-interface StatusOptions {
+interface StatusOptions extends ActorOptions {
   json?: boolean;
 }
 
@@ -21,10 +21,13 @@ export async function runMilestoneStatus(
     fail(`Invalid status: ${statusRaw} (expected pending|active|done)`);
   }
 
+  const { actor, actorType, note } = resolveActor(opts);
   const milestone = await container.setMilestoneStatus.execute({
     id: MilestoneId.from(idRaw),
     to: statusRaw as MilestoneStatus,
-    actor: resolveAuthor(),
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
   });
 
   getFormatter(opts.json ?? false).emit({

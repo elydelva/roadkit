@@ -11,6 +11,7 @@ interface SetSpecStatusInput {
   to: SpecStatus;
   actor: string;
   actorType?: "human" | "agent";
+  note?: string;
 }
 
 export class SetSpecStatusUseCase implements UseCase<SetSpecStatusInput, Spec> {
@@ -42,6 +43,7 @@ export class SetSpecStatusUseCase implements UseCase<SetSpecStatusInput, Spec> {
       event: "spec_status_changed",
       from: spec.status,
       to: input.to,
+      body: input.note,
     });
 
     return updated;

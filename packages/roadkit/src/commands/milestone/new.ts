@@ -1,10 +1,10 @@
 import type { Container } from "../../container.js";
 import { setJsonMode } from "../json-mode.js";
 import { getFormatter } from "../output.js";
-import { fail, resolveAuthor, serializeMilestone } from "../shared.js";
+import { type ActorOptions, fail, resolveActor, serializeMilestone } from "../shared.js";
 import { parseProjectId, requireOption } from "../validators.js";
 
-interface MilestoneNewOptions {
+interface MilestoneNewOptions extends ActorOptions {
   project?: string;
   title?: string;
   order?: string;
@@ -32,12 +32,15 @@ export async function runMilestoneNew(
     targetDate = d;
   }
 
-  const author = resolveAuthor();
+  const { actor, actorType, note } = resolveActor(opts);
   const milestone = await container.createMilestone.execute({
     projectId,
     title,
     order,
-    author,
+    author: actor,
+    actor,
+    actorType,
+    ...(note ? { note } : {}),
     ...(targetDate ? { targetDate } : {}),
     body: opts.body ?? "",
   });

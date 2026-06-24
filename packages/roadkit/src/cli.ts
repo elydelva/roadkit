@@ -47,6 +47,9 @@ export function buildCLI(): Command {
     .option("--leads <leads>", "Comma-separated leads")
     .option("--body <body>", "Project body")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (opts: { title?: string; leads?: string; body?: string; json?: boolean }) => {
       await runProjectNew(await createContainer(getRealmRoot()), opts);
     });
@@ -63,6 +66,9 @@ export function buildCLI(): Command {
     .command("status <projectId> <status>")
     .description("Change a project's status (planned|active|paused|completed|cancelled)")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (projectId: string, status: string, opts: { json?: boolean }) => {
       await runProjectStatus(await createContainer(getRealmRoot()), projectId, status, opts);
     });
@@ -71,6 +77,9 @@ export function buildCLI(): Command {
     .command("start <projectId>")
     .description("Transition a planned project to active")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (projectId: string, opts: { json?: boolean }) => {
       await runProjectStart(await createContainer(getRealmRoot()), projectId, opts);
     });
@@ -87,6 +96,9 @@ export function buildCLI(): Command {
     .option("--target-date <iso>", "Target date (ISO 8601)")
     .option("--body <body>", "Milestone body")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(
       async (opts: {
         project?: string;
@@ -104,6 +116,9 @@ export function buildCLI(): Command {
     .command("status <milestoneId> <status>")
     .description("Change a milestone's status (pending|active|done)")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (milestoneId: string, status: string, opts: { json?: boolean }) => {
       await runMilestoneStatus(await createContainer(getRealmRoot()), milestoneId, status, opts);
     });
@@ -112,6 +127,9 @@ export function buildCLI(): Command {
     .command("start <milestoneId>")
     .description("Transition a pending milestone to active")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (milestoneId: string, opts: { json?: boolean }) => {
       await runMilestoneStart(await createContainer(getRealmRoot()), milestoneId, opts);
     });
@@ -133,6 +151,9 @@ export function buildCLI(): Command {
     .option("--assignee <assignee>", "Assignee")
     .option("--body <body>", "Issue body")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(
       async (opts: {
         project?: string;
@@ -155,6 +176,9 @@ export function buildCLI(): Command {
     .command("start <issueId>")
     .description("Mark an issue as in-progress")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (issueId: string, opts: { json?: boolean }) => {
       await runIssueStart(await createContainer(getRealmRoot()), issueId, opts);
     });
@@ -163,6 +187,9 @@ export function buildCLI(): Command {
     .command("complete <issueId>")
     .description("Mark an issue as completed")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (issueId: string, opts: { json?: boolean }) => {
       await runIssueComplete(await createContainer(getRealmRoot()), issueId, opts);
     });
@@ -178,6 +205,9 @@ export function buildCLI(): Command {
     .option("--tags <tags>", "Comma-separated tags")
     .option("--body <body>", "Spec body")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(
       async (opts: {
         project?: string;
@@ -194,6 +224,9 @@ export function buildCLI(): Command {
     .command("status <specId> <status>")
     .description("Change a spec's status")
     .option("--json", "Machine-readable output")
+    .option("--actor <name>", "Acting actor (overrides env)")
+    .option("--actor-type <type>", "Actor type: human|agent")
+    .option("--message <text>", "Trace note explaining the change")
     .action(async (specId: string, status: string, opts: { json?: boolean }) => {
       await runSpecStatus(await createContainer(getRealmRoot()), specId, status, opts);
     });

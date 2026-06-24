@@ -14,6 +14,7 @@ export interface RecordTraceParams {
   ref?: string | null;
   from?: string | null;
   to?: string | null;
+  body?: string | undefined;
 }
 
 /**
@@ -36,6 +37,7 @@ export async function recordTrace(
     ref: params.ref ?? null,
     from: params.from ?? null,
     to: params.to ?? null,
+    body: params.body ?? "",
   });
   await repo.appendTrace(trace);
 }
