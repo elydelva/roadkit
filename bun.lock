@@ -47,7 +47,6 @@
       "version": "0.0.0",
       "dependencies": {
         "@roadkit/core": "workspace:*",
-        "@roadkit/fs": "workspace:*",
       },
       "devDependencies": {
         "typescript": "catalog:",
